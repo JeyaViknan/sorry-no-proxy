@@ -35,7 +35,7 @@
             generatedCode.innerText = "";
 
             try {
-                const response = await fetch("http://localhost:8000/register", {  // ✅ Updated Port
+                const response = await fetch(`${SERVER}/register`, {  // ✅ Updated Port
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ registerNumber })
