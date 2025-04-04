@@ -4,63 +4,114 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>QR Code Scanner</title>
-    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script> 
+    <script src="js/html5-qrcode.min.js"></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            text-align: center;
+            margin: 0;
+            padding: 20px;
+        }
+        h1 {
+            margin-bottom: 20px;
+        }
+        #reader {
+            width: 300px;
+            height: 300px;
+            margin: 0 auto;
+            border: 1px solid #ccc;
+            position: relative;
+        }
+        #status, #decoded-message {
+            margin-top: 20px;
+            font-size: 18px;
+            color: #333;
+        }
+        #restart-button {
+            margin-top: 20px;
+            padding: 10px 20px;
+            font-size: 16px;
+            cursor: pointer;
+            display: none;
+        }
+    </style>
 </head>
 <body>
     <h1>QR Code Scanner</h1>
-    <p id="status">Initializing scanner...</p>
     <div id="reader"></div>
+    <p id="status">Initializing scanner...</p>
     <p id="decoded-message"></p>
-    <button id="retryButton" onclick="initializeScanner()" style="display:none;">Retry Scanner</button>
+    <button id="restart-button" onclick="restartScanner()">Restart Scanner</button>
 
     <script>
+        const targetUrl = "https://www.youtube.com/";
+
         let html5QrCode;
 
-        async function initializeScanner() {
-            const status = document.getElementById("status");
-            const retryButton = document.getElementById("retryButton");
-            const decodedMessage = document.getElementById("decoded-message");
+        function onScanSuccess(decodedText) {
+            document.getElementById("decoded-message").innerText = `Decoded Message: ${decodedText}`;
 
-            // Clear previous scanner instance
-            if (html5QrCode) {
-                await html5QrCode.stop().catch(err => console.warn("Error stopping scanner:", err));
+            if (decodedText === targetUrl) {
+                document.getElementById("status").innerText = "Valid QR Code scanned. Redirecting...";
+                stopScanner();
+                setTimeout(() => {
+                    window.location.href = targetUrl;
+                }, 1500);
+            } else {
+                document.getElementById("status").innerText = "Invalid QR Code. Please scan a valid one.";
             }
+        }
 
+        function onScanFailure(error) {
+            console.warn("Scan failed:", error);
+        }
+
+        async function initializeScanner() {
+            document.getElementById("status").innerText = "Initializing scanner...";
+            document.getElementById("decoded-message").innerText = ""; 
             html5QrCode = new Html5Qrcode("reader");
 
             try {
                 const cameras = await Html5Qrcode.getCameras();
                 if (cameras.length === 0) {
-                    status.innerText = "❌ No camera found.";
-                    retryButton.style.display = "block"; // Show retry button
+                    document.getElementById("status").innerText = "No camera found. Connect a webcam.";
                     return;
                 }
 
-                retryButton.style.display = "none"; // Hide retry button on success
-                
                 await html5QrCode.start(
                     cameras[0].id,
                     { fps: 10, qrbox: { width: 250, height: 250 } },
-                    (decodedText) => {
-                        decodedMessage.innerText = `✅ Scanned: ${decodedText}`;
-                        if (decodedText.startsWith("http")) {
-                            setTimeout(() => window.location.href = decodedText, 1500);
-                        }
-                    }
+                    onScanSuccess,
+                    onScanFailure
                 );
-
-                status.innerText = "✅ Scanner ready.";
-            } catch (error) {
-                console.error("Scanner Error:", error);
-                status.innerText = "❌ Scanner failed to start. Try again.";
-                retryButton.style.display = "block"; // Show retry button on error
+                document.getElementById("status").innerText = "Scanner ready. Point your QR code at the camera.";
+                document.getElementById("restart-button").style.display = "none";
+            } catch (err) {
+                console.error("Error initializing scanner:", err);
+                document.getElementById("status").innerText = `Error: ${err.message}`;
             }
+        }
+
+        function stopScanner() {
+            if (html5QrCode) {
+                html5QrCode.stop().then(() => {
+                    console.log("Scanner stopped.");
+                    document.getElementById("status").innerText = "Scanner stopped.";
+                    document.getElementById("restart-button").style.display = "inline-block";
+                }).catch(err => {
+                    console.error("Error stopping scanner:", err);
+                });
+            }
+        }
+
+        function restartScanner() {
+            if (html5QrCode) {
+                html5QrCode.clear();
+            }
+            initializeScanner();
         }
 
         window.addEventListener("load", initializeScanner);
     </script>
 </body>
 </html>
-
-//making some changes in vercel
-//updated version from 22 to 18 to resolve 500 error
