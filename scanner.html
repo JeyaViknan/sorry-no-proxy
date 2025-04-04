@@ -78,12 +78,16 @@
                     return;
                 }
 
+                // Try to get back camera
+                const backCamera = cameras.find(camera => camera.label.toLowerCase().includes('back')) || cameras[cameras.length - 1];
+
                 await html5QrCode.start(
-                    cameras[0].id,
+                    backCamera.id,
                     { fps: 10, qrbox: { width: 250, height: 250 } },
                     onScanSuccess,
                     onScanFailure
                 );
+
                 document.getElementById("status").innerText = "Scanner ready. Point your QR code at the camera.";
                 document.getElementById("restart-button").style.display = "none";
             } catch (err) {
@@ -91,6 +95,7 @@
                 document.getElementById("status").innerText = `Error: ${err.message}`;
             }
         }
+
 
         function stopScanner() {
             if (html5QrCode) {
