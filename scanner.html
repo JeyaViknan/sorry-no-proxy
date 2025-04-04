@@ -1,0 +1,63 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>QR Code Scanner</title>
+    <script src="https://unpkg.com/html5-qrcode/minified/html5-qrcode.min.js"></script> <!-- ✅ Fixed Import -->
+</head>
+<body>
+    <h1>QR Code Scanner</h1>
+    <p id="status">Initializing scanner...</p>
+    <div id="reader"></div>
+    <p id="decoded-message"></p>
+    <button id="retryButton" onclick="initializeScanner()" style="display:none;">Retry Scanner</button>
+
+    <script>
+        let html5QrCode;
+
+        async function initializeScanner() {
+            const status = document.getElementById("status");
+            const retryButton = document.getElementById("retryButton");
+            const decodedMessage = document.getElementById("decoded-message");
+
+            // Clear previous scanner instance
+            if (html5QrCode) {
+                await html5QrCode.stop().catch(err => console.warn("Error stopping scanner:", err));
+            }
+
+            html5QrCode = new Html5Qrcode("reader");
+
+            try {
+                const cameras = await Html5Qrcode.getCameras();
+                if (cameras.length === 0) {
+                    status.innerText = "❌ No camera found.";
+                    retryButton.style.display = "block"; // Show retry button
+                    return;
+                }
+
+                retryButton.style.display = "none"; // Hide retry button on success
+                
+                await html5QrCode.start(
+                    cameras[0].id,
+                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    (decodedText) => {
+                        decodedMessage.innerText = `✅ Scanned: ${decodedText}`;
+                        if (decodedText.startsWith("http")) {
+                            setTimeout(() => window.location.href = decodedText, 1500);
+                        }
+                    }
+                );
+
+                status.innerText = "✅ Scanner ready.";
+            } catch (error) {
+                console.error("Scanner Error:", error);
+                status.innerText = "❌ Scanner failed to start. Try again.";
+                retryButton.style.display = "block"; // Show retry button on error
+            }
+        }
+
+        window.addEventListener("load", initializeScanner);
+    </script>
+</body>
+</html>
