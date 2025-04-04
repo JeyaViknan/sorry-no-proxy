@@ -11,10 +11,10 @@ app.use(cors({ origin: "*" })); // Allow all origins (for testing)
 app.use(bodyParser.json());
 
 // Debugging: Check if ENV variables are loaded
-console.log("✅ PORT:", process.env.PORT);
-console.log("✅ SHEET_ID:", process.env.SHEET_ID);
-console.log("✅ GOOGLE_SERVICE_ACCOUNT_EMAIL:", process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
-console.log("✅ GOOGLE_PRIVATE_KEY Loaded:", process.env.GOOGLE_PRIVATE_KEY ? "Yes" : "No");
+// console.log("✅ PORT:", process.env.PORT);
+// console.log("✅ SHEET_ID:", process.env.SHEET_ID);
+// console.log("✅ GOOGLE_SERVICE_ACCOUNT_EMAIL:", process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL);
+// console.log("✅ GOOGLE_PRIVATE_KEY Loaded:", process.env.GOOGLE_PRIVATE_KEY ? "Yes" : "No");
 
 // Google Sheets Setup
 const auth = new google.auth.GoogleAuth({
