@@ -53,7 +53,7 @@ app.post("/register", async (req, res) => {
 
 // Start the server
 app.listen(PORT, () => {
-    console.log(`✅ Server running on https://da14-2401-4900-6285-98be-a936-4cad-9988-3391.ngrok-free.app:${PORT}`);
+    console.log(`✅ Server running on https://74e2-122-187-117-179.ngrok-free.app:${PORT}`);
 });
 
 app.get("/", (req, res) => {
