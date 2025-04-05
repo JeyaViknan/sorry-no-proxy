@@ -44,7 +44,7 @@
                 const data = await response.json();
 
                 if (data.success) {
-                    generatedCode.innerText = `✅ Generated Code: ${data.code}`;
+                    generatedCode.innerText = `Generated Code: ${data.code}`;
                     setTimeout(() => window.location.href = "scanner.html", 3000);
                 } else {
                     alert(`❌ Error: ${data.message || "Failed to generate code."}`);
