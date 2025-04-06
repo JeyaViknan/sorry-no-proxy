@@ -1,62 +1,161 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>User Registration</title>
-    <style>
-        body { font-family: Arial, sans-serif; text-align: center; margin: 0; padding: 20px; }
-        input, button { font-size: 18px; padding: 10px; margin: 10px; }
-        #loadingMessage { font-size: 18px; color: blue; display: none; }
-    </style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>QR Code Scanner</title>
+  <script src="js/html5-qrcode.min.js"></script>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      text-align: center;
+      margin: 0;
+      padding: 20px;
+    }
+    h1 {
+      margin-bottom: 20px;
+    }
+    #reader {
+      width: 300px;
+      height: 300px;
+      margin: 0 auto;
+      border: 1px solid #ccc;
+    }
+    #status, #decoded-message {
+      margin-top: 20px;
+      font-size: 18px;
+      color: #333;
+    }
+    #register-section {
+      margin-top: 30px;
+      display: none;
+    }
+    input, button {
+      font-size: 18px;
+      padding: 10px;
+      margin: 10px;
+    }
+    #code-result {
+      font-size: 20px;
+      color: green;
+      margin-top: 15px;
+    }
+  </style>
 </head>
 <body>
-    <h1>Enter Register Number</h1>
+  <h1>QR Code Scanner</h1>
+
+  <div id="reader"></div>
+  <p id="status">Initializing scanner...</p>
+  <p id="decoded-message"></p>
+
+  <!-- Register section (hidden initially) -->
+  <div id="register-section">
     <input type="text" id="registerNumber" placeholder="Enter Register Number">
-    <button id="generateButton" onclick="generateCode()">Get Code</button>
-    <p id="loadingMessage">Cooking up some spicy digits, hang tight...</p>
-    <p id="generatedCode"></p>
+    <button onclick="submitRegisterNumber()">Generate Code</button>
+    <p id="loadingMessage" style="color: blue; display: none;">Cooking up some spicy digits, hang tight...</p>
+    <p id="code-result"></p>
+  </div>
 
-    <script>
-        async function generateCode() {
-            const registerNumber = document.getElementById("registerNumber").value.trim();
-            const generateButton = document.getElementById("generateButton");
-            const loadingMessage = document.getElementById("loadingMessage");
-            const generatedCode = document.getElementById("generatedCode");
+  <script>
+    const targetUrl = "https://www.youtube.com/";
+    const apiEndpoint = "https://d755-2401-4900-67b7-9d1e-28e8-7b8f-5d8c-93bf.ngrok-free.app/register";
 
-            if (!registerNumber) {
-                alert("You can’t ghost your identity. Type that reg number in.");
-                return;
-            }
+    let html5QrCode;
 
-            // Disable button to prevent multiple requests
-            generateButton.disabled = true;
-            loadingMessage.style.display = "block";
-            generatedCode.innerText = "";
+    function onScanSuccess(decodedText) {
+      document.getElementById("decoded-message").innerText = `Decoded Message: ${decodedText}`;
 
-            try {
-                const response = await fetch(`https://9946-2401-4900-67b7-9d1e-d15d-8cde-9180-466.ngrok-free.app/register`, {  // ✅ Updated Port
-                    method: "POST",
-                    headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ registerNumber })
-                });
+      if (decodedText === targetUrl) {
+        document.getElementById("status").innerText = "✅ Valid QR Code scanned.";
 
-                const data = await response.json();
+        // Stop scanner and show register input
+        stopScanner();
+        document.getElementById("register-section").style.display = "block";
+      } else {
+        document.getElementById("status").innerText = "❌ Invalid QR Code. Try again.";
+      }
+    }
 
-                if (data.success) {
-                    generatedCode.innerText = `Generated Code: ${data.code}`;
-                    setTimeout(() => window.location.href = "scanner.html", 3000);
-                } else {
-                    alert(`❌ Error: ${data.message || "Failed to generate code."}`);
-                }
-            } catch (error) {
-                alert("❌ Server error. Please try again.");
-            } finally {
-                // Re-enable button and hide loading message
-                generateButton.disabled = false;
-                loadingMessage.style.display = "none";
-            }
+    function onScanFailure(error) {
+      console.warn("Scan failed:", error);
+    }
+
+    async function initializeScanner() {
+      document.getElementById("status").innerText = "Initializing scanner...";
+      html5QrCode = new Html5Qrcode("reader");
+
+      try {
+        const cameras = await Html5Qrcode.getCameras();
+        if (cameras.length === 0) {
+          document.getElementById("status").innerText = "No camera found. Connect a webcam.";
+          return;
         }
-    </script>
+
+        const backCamera = cameras.find(cam => cam.label.toLowerCase().includes("back")) || cameras[0];
+
+        await html5QrCode.start(
+          backCamera.id,
+          { fps: 10, qrbox: { width: 250, height: 250 } },
+          onScanSuccess,
+          onScanFailure
+        );
+
+        document.getElementById("status").innerText = "Scan the QR like it’s sacred 🧘";
+      } catch (err) {
+        console.error("Error initializing scanner:", err);
+        document.getElementById("status").innerText = `Error: ${err.message}`;
+      }
+    }
+
+    function stopScanner() {
+      if (html5QrCode) {
+        html5QrCode.stop().then(() => {
+          document.getElementById("status").innerText = "Scanner stopped.";
+        }).catch(err => {
+          console.error("Error stopping scanner:", err);
+        });
+      }
+    }
+
+    async function submitRegisterNumber() {
+      const registerNumber = document.getElementById("registerNumber").value.trim();
+      const loadingMessage = document.getElementById("loadingMessage");
+      const codeResult = document.getElementById("code-result");
+
+      if (!registerNumber) {
+        alert("Enter your register number, soldier!");
+        return;
+      }
+
+      loadingMessage.style.display = "block";
+      codeResult.innerText = "";
+
+      try {
+        const response = await fetch(apiEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ registerNumber })
+        });
+
+        const data = await response.json();
+
+        if (data.success) {
+          codeResult.innerText = `🎉 Your Code: ${data.code}`;
+          setTimeout(() => {
+            window.location.href = targetUrl;
+          }, 3000);
+        } else {
+          alert(`❌ Error: ${data.message || "Failed to generate code."}`);
+        }
+      } catch (error) {
+        alert("❌ Server error. Please try again.");
+      } finally {
+        loadingMessage.style.display = "none";
+      }
+    }
+
+    window.addEventListener("load", initializeScanner);
+  </script>
 </body>
 </html>
