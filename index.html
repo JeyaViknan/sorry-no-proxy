@@ -20,7 +20,7 @@
     <p id="status">Initializing scanner...</p>
 
     <section id="register-section" style="display: none;">
-      <p class="success-text">✅ QR Code Verified</p>
+      <p class="success-text">QR Code Verified</p><br>
       <input type="text" id="registerNumber" placeholder="Enter Register Number"><br><br>
       <button id="getCodeBtn" onclick="submitRegisterNumber()">Get Code</button>
       <p id="loadingMessage" style="display:none;">Cooking up some spicy digits, hang tight...</p>
@@ -39,7 +39,7 @@
       // Trim and check for match
       if (!qrScanned && decodedText.trim().includes(targetUrl)) {
         qrScanned = true; // prevent multiple scans
-        document.getElementById("status").innerText = "✅ Valid QR Code scanned.";
+        document.getElementById("status").innerText = "You made it.";
         document.getElementById("reader-container").style.display = "none";
         document.getElementById("register-section").style.display = "block";
         stopScanner();
