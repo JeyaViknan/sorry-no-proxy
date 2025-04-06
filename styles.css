@@ -1,0 +1,112 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;600&display=swap');
+
+body {
+  margin: 0;
+  padding: 20px;
+  font-family: -apple-system, BlinkMacSystemFont, "Inter", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+  background-color: #000;
+  color: #e5e5e5;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  min-height: 100vh;
+}
+
+h1 {
+  font-size: 2rem;
+  margin: 24px 0;
+  color: #007aff;
+  font-weight: 600;
+}
+
+#reader-container {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  margin-bottom: 24px;
+}
+
+#reader {
+  width: 300px;
+  height: 300px;
+  border-radius: 20px;
+  background-color: #111;
+  border: 2px solid #007aff;
+  box-shadow: 0 0 20px rgba(0, 122, 255, 0.4);
+  overflow: hidden;
+}
+
+#status {
+  margin-bottom: 20px;
+  font-size: 1rem;
+  color: #888;
+}
+
+#register-section {
+  background-color: #111;
+  padding: 24px;
+  border-radius: 20px;
+  width: 90%;
+  max-width: 400px;
+  box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+  margin-top: 24px;
+}
+
+#registerNumber {
+  padding: 12px 16px;
+  border-radius: 12px;
+  border: 1px solid #333;
+  width: 100%;
+  max-width: 100%;
+  font-size: 1rem;
+  background-color: #1a1a1a;
+  color: #fff;
+  outline: none;
+  transition: border 0.2s ease;
+  box-sizing: border-box;
+}
+
+#registerNumber:focus {
+  border-color: #007aff;
+}
+
+button {
+  width: 100%;
+  padding: 12px 24px;
+  background-color: #007aff;
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-weight: 600;
+  font-size: 1rem;
+  cursor: pointer;
+  transition: background 0.2s ease, transform 0.1s ease;
+}
+
+button:hover {
+  background-color: #339cff;
+}
+
+button:active {
+  transform: scale(0.98);
+}
+
+.success-text {
+  color: #007aff;
+  font-size: 1.1rem;
+}
+
+#code-result {
+  font-size: 1.2rem;
+  color: #0f0;
+}
+
+#loadingMessage {
+  color: #ffc107;
+  font-style: italic;
+}

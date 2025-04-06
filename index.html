@@ -4,91 +4,61 @@
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
   <title>QR Code Scanner</title>
+  <link rel="stylesheet" href="styles.css" />
   <script src="js/html5-qrcode.min.js"></script>
-  <style>
-    body {
-      font-family: Arial, sans-serif;
-      text-align: center;
-      margin: 0;
-      padding: 20px;
-    }
-    h1 {
-      margin-bottom: 20px;
-    }
-    #reader {
-      width: 300px;
-      height: 300px;
-      margin: 0 auto;
-      border: 1px solid #ccc;
-    }
-    #status, #decoded-message {
-      margin-top: 20px;
-      font-size: 18px;
-      color: #333;
-    }
-    #register-section {
-      margin-top: 30px;
-      display: none;
-    }
-    input, button {
-      font-size: 18px;
-      padding: 10px;
-      margin: 10px;
-    }
-    #code-result {
-      font-size: 20px;
-      color: green;
-      margin-top: 15px;
-    }
-  </style>
 </head>
 <body>
-  <h1>QR Code Scanner</h1>
+  <header>
+    <h1>QR Code Scanner</h1>
+  </header>
 
-  <div id="reader"></div>
-  <p id="status">Initializing scanner...</p>
-  <p id="decoded-message"></p>
+  <main>
+    <div id="reader-container">
+      <div id="reader"></div>
+    </div>
 
-  <!-- Register section (hidden initially) -->
-  <div id="register-section">
-    <input type="text" id="registerNumber" placeholder="Enter Register Number">
-    <button onclick="submitRegisterNumber()">Generate Code</button>
-    <p id="loadingMessage" style="color: blue; display: none;">Cooking up some spicy digits, hang tight...</p>
-    <p id="code-result"></p>
-  </div>
+    <p id="status">Initializing scanner...</p>
+
+    <section id="register-section" style="display: none;">
+      <p class="success-text">✅ QR Code Verified</p>
+      <input type="text" id="registerNumber" placeholder="Enter Register Number"><br><br>
+      <button id="getCodeBtn" onclick="submitRegisterNumber()">Get Code</button>
+      <p id="loadingMessage" style="display:none;">Cooking up some spicy digits, hang tight...</p>
+      <p id="code-result"></p>
+    </section>
+  </main>
 
   <script>
-    const targetUrl = "https://www.youtube.com/";
+    const targetUrl = "https://qrfy.io/QlU4rjtldc";
     const apiEndpoint = "https://d755-2401-4900-67b7-9d1e-28e8-7b8f-5d8c-93bf.ngrok-free.app/register";
 
     let html5QrCode;
+    let qrScanned = false;
 
     function onScanSuccess(decodedText) {
-      document.getElementById("decoded-message").innerText = `Decoded Message: ${decodedText}`;
-
-      if (decodedText === targetUrl) {
+      // Trim and check for match
+      if (!qrScanned && decodedText.trim().includes(targetUrl)) {
+        qrScanned = true; // prevent multiple scans
         document.getElementById("status").innerText = "✅ Valid QR Code scanned.";
-
-        // Stop scanner and show register input
-        stopScanner();
+        document.getElementById("reader-container").style.display = "none";
         document.getElementById("register-section").style.display = "block";
+        stopScanner();
       } else {
-        document.getElementById("status").innerText = "❌ Invalid QR Code. Try again.";
+        document.getElementById("status").innerText = "Hold your QR like it's Simba in Lion King. Yes, that high.";
       }
     }
 
     function onScanFailure(error) {
-      console.warn("Scan failed:", error);
+      console.warn("QR scan failed:", error);
     }
 
     async function initializeScanner() {
-      document.getElementById("status").innerText = "Initializing scanner...";
       html5QrCode = new Html5Qrcode("reader");
 
       try {
         const cameras = await Html5Qrcode.getCameras();
         if (cameras.length === 0) {
-          document.getElementById("status").innerText = "No camera found. Connect a webcam.";
+          document.getElementById("status").innerText = "No camera found.";
           return;
         }
 
@@ -96,23 +66,20 @@
 
         await html5QrCode.start(
           backCamera.id,
-          { fps: 10, qrbox: { width: 250, height: 250 } },
+          { fps: 10, qrbox: { width: 300, height: 300 } },
           onScanSuccess,
           onScanFailure
         );
 
-        document.getElementById("status").innerText = "Scan the QR like it’s sacred 🧘";
+        document.getElementById("status").innerText = "Point your phone close to the QR";
       } catch (err) {
-        console.error("Error initializing scanner:", err);
         document.getElementById("status").innerText = `Error: ${err.message}`;
       }
     }
 
     function stopScanner() {
       if (html5QrCode) {
-        html5QrCode.stop().then(() => {
-          document.getElementById("status").innerText = "Scanner stopped.";
-        }).catch(err => {
+        html5QrCode.stop().catch(err => {
           console.error("Error stopping scanner:", err);
         });
       }
@@ -122,12 +89,14 @@
       const registerNumber = document.getElementById("registerNumber").value.trim();
       const loadingMessage = document.getElementById("loadingMessage");
       const codeResult = document.getElementById("code-result");
+      const getCodeBtn = document.getElementById("getCodeBtn");
 
       if (!registerNumber) {
-        alert("Enter your register number, soldier!");
+        alert("You can’t ghost your identity. Type that reg number in.");
         return;
       }
 
+      getCodeBtn.style.display = "none"; // Hide the button
       loadingMessage.style.display = "block";
       codeResult.innerText = "";
 
@@ -141,15 +110,15 @@
         const data = await response.json();
 
         if (data.success) {
-          codeResult.innerText = `🎉 Your Code: ${data.code}`;
+          codeResult.innerText = `Your Code: ${data.code}`;
           setTimeout(() => {
             window.location.href = targetUrl;
-          }, 3000);
+          }, 3000); // Redirect after showing code
         } else {
-          alert(`❌ Error: ${data.message || "Failed to generate code."}`);
+          alert(data.message || "Code generation failed.");
         }
       } catch (error) {
-        alert("❌ Server error. Please try again.");
+        alert("Server error. Try again later.");
       } finally {
         loadingMessage.style.display = "none";
       }
