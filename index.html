@@ -2,83 +2,74 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />
   <title>QR Code Scanner</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="js/html5-qrcode.min.js"></script>
   <style>
-    input, button {
-      touch-action: manipulation;
-    }
-
-    body {
-      touch-action: none; /* So we can handle gestures manually */
-      overscroll-behavior: contain;
+    html, body {
+      touch-action: none;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
     }
 
     #reader {
       width: 100%;
-      max-width: 400px;
-      margin: 0 auto;
+      height: auto;
+      aspect-ratio: 3/4;
     }
 
-    #status {
-      text-align: center;
-      margin-top: 15px;
+    video {
+      object-fit: cover;
+      width: 100% !important;
+      height: 100% !important;
+    }
+
+    #zoomControl {
+      width: 80%;
+      margin: 10px auto;
+      display: none;
+    }
+
+    #zoomSlider {
+      width: 100%;
     }
   </style>
 </head>
 <body>
-  <header>
-    <h1>QR Code Scanner</h1>
-  </header>
+  <h1>QR Code Scanner</h1>
 
-  <main>
-    <div id="reader-container">
-      <div id="reader"></div>
-    </div>
+  <div id="reader"></div>
+  <div id="zoomControl">
+    <label for="zoomSlider">Zoom:</label>
+    <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1" />
+  </div>
+  <p id="status">Initializing scanner...</p>
 
-    <p id="status">Initializing scanner...</p>
-
-    <section id="register-section" style="display: none;">
-      <p class="success-text">QR Code Verified</p><br>
-      <input type="text" id="registerNumber" placeholder="Enter Register Number"><br><br>
-      <button id="getCodeBtn" onclick="submitRegisterNumber()">Get Code</button>
-      <p id="loadingMessage" style="display:none;">Cooking up some spicy digits, hang tight...</p>
-      <p id="code-result"></p>
-    </section>
-  </main>
+  <section id="register-section" style="display: none;">
+    <p class="success-text">QR Code Verified</p>
+    <input type="text" id="registerNumber" placeholder="Enter Register Number">
+    <button id="getCodeBtn" onclick="submitRegisterNumber()">Get Code</button>
+    <p id="loadingMessage" style="display:none;">Cooking up some spicy digits, hang tight...</p>
+    <p id="code-result"></p>
+  </section>
 
   <script>
     const targetUrl = "https://qrfy.io/QlU4rjtldc";
-    const apiEndpoint = "https://fdd0-2401-4900-4dfd-fa47-95dc-3886-f643-7f8f.ngrok-free.app/register";
+    const apiEndpoint = "https://6269-2401-4900-4df6-2788-f447-bd50-3125-e254.ngrok-free.app/register";
 
     let html5QrCode;
     let qrScanned = false;
-    let currentZoom = 1;
-
-    function onScanSuccess(decodedText) {
-      if (!qrScanned && decodedText.trim().includes(targetUrl)) {
-        qrScanned = true;
-        document.getElementById("status").innerText = "You made it.";
-        document.getElementById("reader-container").style.display = "none";
-        document.getElementById("register-section").style.display = "block";
-        stopScanner();
-      } else {
-        document.getElementById("status").innerText = "Hold your QR like it's Simba in Lion King. Yes, that high.";
-      }
-    }
-
-    function onScanFailure(error) {
-      console.warn("QR scan failed:", error);
-    }
+    let videoTrack = null;
 
     async function initializeScanner() {
       html5QrCode = new Html5Qrcode("reader");
 
       try {
         const cameras = await Html5Qrcode.getCameras();
-        if (cameras.length === 0) {
+        if (!cameras.length) {
           document.getElementById("status").innerText = "No camera found.";
           return;
         }
@@ -89,13 +80,8 @@
           backCamera.id,
           {
             fps: 10,
-            qrbox: { width: 300, height: 300 },
-            experimentalFeatures: {
-              useBarCodeDetectorIfSupported: true
-            },
             videoConstraints: {
-              facingMode: "environment",
-              advanced: [{ zoom: currentZoom }]
+              facingMode: "environment"
             }
           },
           onScanSuccess,
@@ -104,6 +90,37 @@
 
         document.getElementById("status").innerText = "Point your phone close to the QR";
 
+        // Wait for video element to appear and extract track
+        const interval = setInterval(() => {
+          const videoElem = document.querySelector("video");
+          const stream = videoElem?.srcObject;
+          if (videoElem && stream) {
+            clearInterval(interval);
+            videoTrack = stream.getVideoTracks()[0];
+            const capabilities = videoTrack.getCapabilities();
+            if (capabilities.zoom) {
+              const zoomSlider = document.getElementById("zoomSlider");
+              zoomSlider.min = capabilities.zoom.min || 1;
+              zoomSlider.max = capabilities.zoom.max || 5;
+              zoomSlider.step = 0.1;
+              zoomSlider.value = capabilities.zoom.min || 1;
+
+              document.getElementById("zoomControl").style.display = "block";
+
+              zoomSlider.addEventListener("input", async (e) => {
+                const newZoom = parseFloat(e.target.value);
+                try {
+                  await videoTrack.applyConstraints({
+                    advanced: [{ zoom: newZoom }]
+                  });
+                } catch (err) {
+                  console.warn("Zoom failed:", err);
+                }
+              });
+            }
+          }
+        }, 300);
+
       } catch (err) {
         document.getElementById("status").innerText = `Error: ${err.message}`;
       }
@@ -111,84 +128,62 @@
 
     function stopScanner() {
       if (html5QrCode) {
-        html5QrCode.stop().catch(err => {
-          console.error("Error stopping scanner:", err);
-        });
+        html5QrCode.stop().catch(console.error);
       }
+    }
+
+    function onScanSuccess(decodedText) {
+      if (!qrScanned && decodedText.includes(targetUrl)) {
+        qrScanned = true;
+        document.getElementById("status").innerText = "QR Verified.";
+        document.getElementById("reader").style.display = "none";
+        document.getElementById("zoomControl").style.display = "none";
+        document.getElementById("register-section").style.display = "block";
+        stopScanner();
+      } else {
+        document.getElementById("status").innerText = "Try holding your QR steady.";
+      }
+    }
+
+    function onScanFailure(error) {
+      console.warn("Scan error:", error);
     }
 
     async function submitRegisterNumber() {
-      const registerNumber = document.getElementById("registerNumber").value.trim();
-      const loadingMessage = document.getElementById("loadingMessage");
-      const codeResult = document.getElementById("code-result");
-      const getCodeBtn = document.getElementById("getCodeBtn");
+      const reg = document.getElementById("registerNumber").value.trim();
+      const loading = document.getElementById("loadingMessage");
+      const result = document.getElementById("code-result");
+      const btn = document.getElementById("getCodeBtn");
 
-      if (!registerNumber) {
-        alert("You can’t ghost your identity. Type that reg number in.");
+      if (!reg) {
+        alert("Enter register number.");
         return;
       }
 
-      getCodeBtn.style.display = "none";
-      loadingMessage.style.display = "block";
-      codeResult.innerText = "";
+      btn.style.display = "none";
+      loading.style.display = "block";
+      result.innerText = "";
 
       try {
-        const response = await fetch(apiEndpoint, {
+        const res = await fetch(apiEndpoint, {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ registerNumber })
+          body: JSON.stringify({ registerNumber: reg })
         });
 
-        const data = await response.json();
+        const data = await res.json();
 
         if (data.success) {
-          codeResult.innerText = `Your Code: ${data.code}`;
-          setTimeout(() => {
-            window.location.href = targetUrl;
-          }, 3000);
+          result.innerText = `Your Code: ${data.code}`;
+          setTimeout(() => window.location.href = targetUrl, 3000);
         } else {
           alert(data.message || "Code generation failed.");
         }
-      } catch (error) {
-        alert("Server error. Try again later.");
+      } catch {
+        alert("Server error. Try again.");
       } finally {
-        loadingMessage.style.display = "none";
+        loading.style.display = "none";
       }
-    }
-
-    // -------- PINCH TO ZOOM SUPPORT --------
-    let initialPinchDistance = null;
-
-    document.addEventListener("touchstart", (e) => {
-      if (e.touches.length === 2) {
-        initialPinchDistance = getDistance(e.touches);
-      }
-    }, { passive: false });
-
-    document.addEventListener("touchmove", async (e) => {
-      if (e.touches.length === 2 && initialPinchDistance) {
-        e.preventDefault();
-        const newDistance = getDistance(e.touches);
-        const delta = newDistance - initialPinchDistance;
-
-        let newZoom = currentZoom + delta * 0.01;
-        newZoom = Math.max(1, Math.min(3, newZoom)); // clamp between 1x and 3x zoom
-
-        try {
-          await html5QrCode.applyVideoConstraints({
-            advanced: [{ zoom: newZoom }]
-          });
-          currentZoom = newZoom;
-          initialPinchDistance = newDistance;
-        } catch (err) {
-          console.warn("Pinch zoom failed:", err);
-        }
-      }
-    }, { passive: false });
-
-    function getDistance(touches) {
-      const [t1, t2] = touches;
-      return Math.hypot(t1.clientX - t2.clientX, t1.clientY - t2.clientY);
     }
 
     window.addEventListener("load", initializeScanner);
