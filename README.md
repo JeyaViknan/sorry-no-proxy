@@ -1,90 +1,85 @@
-🙅‍♂️ Sorry-No-Proxy 😎
-Because if you weren’t there, you weren’t really there.
+# 🙅‍♂️ Sorry-No-Proxy 😎  
+> Because if you weren’t there, you weren’t *really* there.
 
-🎯 Project Description
-Sorry-No-Proxy is a cheeky little attendance system with one mission: crush the proxy game.
-It's got two sides (like every good story):
+---
 
-🧑‍🏫 Faculty Side: The QR generator. Simple. Straightforward. Just HTML & CSS with a sprinkle of sass.
+## 🎯 Project Overview
 
-👨‍🎓 Student Side: The real MVP — a smart QR scanner that knows how to separate the real from the fake (like your friend who said they’d be "just 5 minutes late").
+**Sorry-No-Proxy** is an attendance system designed to eliminate proxies once and for all — not with brute force, but with a clever QR twist.
 
-🔄 How It Works
-🧑‍🏫 Faculty Side (a.k.a QR Show-Off)
-Built using good ol’ HTML & CSS.
+It consists of two parts:
 
-Displays a QR code that changes constantly — like mood swings, but coded.
+- 🧑‍🏫 **Faculty Side**: A simple frontend that plays the “guess the valid QR” game.
+- 👨‍🎓 **Student Side**: A smart scanner app that knows which QR is real and which one’s just a decoy.
 
-99.9% of them are fake (take that, cheaters!).
+Spoiler: the student side does all the heavy lifting.
 
-But once, at a random and unpredictable time, a valid QR code shows up like a secret boss level — and only that one redirects to the Google Form for attendance.
+---
 
-👨‍🎓 Student Side (a.k.a The QR Whisperer)
-Built using JavaScript, Node.js, and Express.js — yeah, it’s got brains.
+## 🧑‍🏫 Faculty Side
 
-Constantly scans those flashy QRs.
+- Built with just **HTML & CSS**.
+- Displays QR codes that **change every few seconds**.
+- **Almost all** of them are **fake** — harmless little trolls.
+- At **one** **random point in time**, a **valid QR** appears — this leads to a **Google Form**.
+- If a student catches that moment, they’re in. If not — better luck next class.
 
-If it's a fake, it gets ignored faster than spam email.
+---
 
-If it’s the valid QR:
+## 👨‍🎓 Student Side
 
-Student enters their Register Number.
+- Built with **Node.js**, **Express.js**, and **JavaScript**.
+- Acts as a QR scanner, but with standards — it **only responds to the valid QR**.
+- When a valid QR is detected:
+  1. The student is asked to enter their **Register Number**.
+  2. A **unique code** is generated for that register number.
+  3. This code is saved to a **Google Sheet** via **Google Sheets API**.
+  4. The student sees this code for **3 seconds** — better memorize it!
+  5. They’re then redirected to the **Google Form** where:
+     - The first field is the **generated code** (serves as your attendance password).
+     - Followed by name, register number, etc.
 
-A unique code is generated based on it — this code is basically your golden ticket.
+---
 
-That code is stored in a Google Sheet using the Google Sheets API (via Google Cloud Console).
+## ✅ Attendance Verification Logic
 
-You get 3 seconds to memorize it. That’s it. No screenshots. No cheats. No crying.
+- When the Google Form is submitted, the faculty side checks if:
+  - The **code entered in the form** matches the one stored in the Google Sheet.
+- If they match: ✅ Attendance granted.
+- If not: ❌ Proxy alert! Someone’s trying to be sneaky.
 
-After that, you’re redirected to the Google Form.
+---
 
-You enter:
+## 🛠️ Tech Stack
 
-The generated code (this is your attendance password 🕵️‍♂️)
+| Component             | Technology               |
+|----------------------|--------------------------|
+| Faculty Frontend     | HTML, CSS                |
+| Student App Backend  | Node.js, Express.js      |
+| QR Code Management   | JavaScript               |
+| Data Storage         | Google Sheets (via API)  |
+| Form Submission      | Google Forms             |
 
-Your details like name, register number, etc.
+---
 
-Submit the form and boom — you just earned your attendance. Congrats on being actually present 🎉
+## 🤖 Why This Works
 
-✅ The Proxy-Busting Mechanism
-The code generated earlier (when you scanned the QR) is stored securely.
+Unlike traditional attendance systems where anyone can just fill in a form link and pretend they were present, **Sorry-No-Proxy** introduces an element of *surprise and validation*. It’s like a pop quiz, but instead of grades, you get attendance.
 
-When the form is submitted, the faculty checks if the submitted code matches the one in the Google Sheet.
+No more:
+- "Bro, send me the form link."
+- "I'll mark you present, don’t worry."
+- "Let me just scan from home."
 
-If it matches: ✅ Attendance granted!
+Because unless you were there — scanning, entering, memorizing, and submitting — **you get nothing.** 😈
 
-If not: ❌ Nice try, buddy.
+---
 
-⚙️ Tech Stack
+## ✨ Final Word
 
-Role	Tech
-Frontend (Faculty)	HTML + CSS
-Backend (Student Scanner)	Node.js + Express.js
-QR Scanning Logic	JavaScript
-Data Storage	Google Sheets via Google Sheets API
-Form Handling	Google Forms
-🤖 Why Build This?
-Because "bro please scan for me" is not a valid excuse anymore.
-This system ensures that:
+This project wasn’t just made to log attendance. It was made to restore faith in the system (okay, maybe just a little).  
+If you were actually present — **you deserve your attendance**.  
+If you weren’t — well, **Sorry... No Proxy** 😉
 
-Attendance is given only to those who are actually present.
-
-Proxy attempts get busted — gracefully, of course.
-
-No one can predict when the valid QR shows up — not even Nostradamus.
-
-🚀 Future Add-ons (a.k.a Cool Stuff We Might Build)
-⏰ Real-time QR updates with WebSockets.
-
-📊 Faculty dashboard to view attendance & code logs.
-
-🔒 Optional student authentication with Firebase.
-
-🧠 AI-generated excuses for when someone still tries to proxy (just kidding).
-
-📌 Final Words
-Sorry-No-Proxy isn’t just a project — it’s a rebellion against lazy attendance hacks.
-So next time someone says, “Can you scan for me?”, hit them with the link to this repo and say:
-
-“Sorry bro… no proxy.”
+---
 
