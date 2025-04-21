@@ -7,17 +7,17 @@ const { google } = require("googleapis");
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-app.use(cors({ origin: "*" })); // Allow all origins (for testing)
+app.use(cors({ origin: "*" }));
 app.use(bodyParser.json());
 
-// Google Sheets Setup
 const auth = new google.auth.GoogleAuth({
     credentials: {
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
-        private_key: (process.env.GOOGLE_PRIVATE_KEY || "").replace(/\\n/g, "\n"),
+        private_key: process.env.GOOGLE_PRIVATE_KEY, // No replace() needed now
     },
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
 });
+
 const sheets = google.sheets({ version: "v4", auth });
 
 app.post("/register", async (req, res) => {
@@ -29,8 +29,7 @@ app.post("/register", async (req, res) => {
 
     try {
         const generatedCode = `CODE-${Math.floor(Math.random() * 10000)}`;
-        
-        // Append data to Google Sheet
+
         await sheets.spreadsheets.values.append({
             spreadsheetId: process.env.SHEET_ID,
             range: "Sheet1!A:B",
@@ -45,7 +44,8 @@ app.post("/register", async (req, res) => {
     }
 });
 
-// Start the server
+console.log("Spreadsheet ID:", process.env.SHEET_ID);
+
 app.listen(PORT, () => {
     console.log(`✅ Server running on https://74e2-122-187-117-179.ngrok-free.app:${PORT}`);
 });
