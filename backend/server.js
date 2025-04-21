@@ -44,7 +44,8 @@ app.post("/register", async (req, res) => {
     }
 });
 
-console.log("Spreadsheet ID:", process.env.SHEET_ID);
+console.log("SPREADSHEET_ID:", process.env.SHEET_ID);
+
 
 app.listen(PORT, () => {
     console.log(`✅ Server running on https://74e2-122-187-117-179.ngrok-free.app:${PORT}`);
