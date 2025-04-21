@@ -9,7 +9,7 @@
 
 It consists of two parts:
 
-- 🧑‍🏫 **Faculty Side**: A simple frontend that plays the “guess the valid QR” game.
+- 🧑‍🏫 **Faculty Side**: A simple frontend that plays the “catch the valid QR” game.
 - 👨‍🎓 **Student Side**: A smart scanner app that knows which QR is real and which one’s just a decoy.
 
 Spoiler: the student side does all the heavy lifting.
