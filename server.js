@@ -11,7 +11,6 @@ app.use(cors({ origin: "*" })); // Allow all origins (for testing)
 app.use(bodyParser.json());
 
 
-
 const auth = new google.auth.GoogleAuth({
     credentials: {
         client_email: process.env.GOOGLE_SERVICE_ACCOUNT_EMAIL,
