@@ -7,7 +7,7 @@ const { google } = require("googleapis");
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-app.use(cors({ origin: "*" })); // Allow all origins (for testing)
+app.use(cors({ origin: "*" })); 
 app.use(bodyParser.json());
 
 
@@ -27,10 +27,9 @@ app.post("/register", async (req, res) => {
         return res.status(400).json({ success: false, message: "Missing register number" });
     }
 
-    // try {
         const generatedCode = `CODE-${Math.floor(Math.random() * 10000)}`;
         
-        // Append data to Google Sheet
+
         await sheets.spreadsheets.values.append({
             spreadsheetId: process.env.SHEET_ID,
             range: "Sheet1!A:B",
@@ -39,13 +38,8 @@ app.post("/register", async (req, res) => {
         });
 
         res.json({ success: true, code: generatedCode });
-    // } catch (error) {
-    //     console.error("❌ Error writing to Google Sheets:", error.response?.data || error.message);
-    //     res.status(500).json({ success: false, message: "Failed to save to Google Sheets." });
-    // }
 });
 
-// Start the server
 app.listen(PORT, () => {
     console.log(`✅ Server running on https://74e2-122-187-117-179.ngrok-free.app:${PORT}`);
 });
