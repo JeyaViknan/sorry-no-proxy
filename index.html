@@ -133,7 +133,17 @@
     }
 
     function onScanSuccess(decodedText) {
-      if (!qrScanned && decodedText.includes(targetUrl)) {
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yy = String(today.getFullYear()).slice(-2);
+      const expectedYouTubePattern = `www.youtube.com${dd}${mm}${yy}`;
+
+      if (!qrScanned && decodedText.includes(expectedYouTubePattern)) {
+        qrScanned = true;
+        stopScanner();
+        window.location.href = "https://www.youtube.com";
+      } else if (!qrScanned && decodedText.includes(targetUrl)) {
         qrScanned = true;
         document.getElementById("status").innerText = "QR Verified.";
         document.getElementById("reader").style.display = "none";
