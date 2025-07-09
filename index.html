@@ -57,7 +57,6 @@
   </section>
 
   <script>
-    const targetUrl = "https://qrfy.io/11FIufJ1u0";
     const apiEndpoint = "https://sorry-no-proxy.onrender.com/register";
 
     let html5QrCode;
@@ -90,7 +89,6 @@
 
         document.getElementById("status").innerText = "Point your phone close to the QR";
 
-        // Wait for video element to appear and extract track
         const interval = setInterval(() => {
           const videoElem = document.querySelector("video");
           const stream = videoElem?.srcObject;
@@ -137,21 +135,19 @@
       const dd = String(today.getDate()).padStart(2, '0');
       const mm = String(today.getMonth() + 1).padStart(2, '0');
       const yy = String(today.getFullYear()).slice(-2);
-      const expectedYouTubePattern = `www.youtube.com${dd}${mm}${yy}`;
+      const expectedText = `www.youtube.com${dd}${mm}${yy}`;
 
-      if (!qrScanned && decodedText.includes(expectedYouTubePattern)) {
+      if (!qrScanned && decodedText.includes(expectedText)) {
         qrScanned = true;
         stopScanner();
         window.location.href = "https://www.youtube.com";
-      } else if (!qrScanned && decodedText.includes(targetUrl)) {
+      } else if (!qrScanned) {
         qrScanned = true;
         document.getElementById("status").innerText = "QR Verified.";
         document.getElementById("reader").style.display = "none";
         document.getElementById("zoomControl").style.display = "none";
         document.getElementById("register-section").style.display = "block";
         stopScanner();
-      } else {
-        document.getElementById("status").innerText = "Try holding your QR steady.";
       }
     }
 
@@ -185,7 +181,7 @@
 
         if (data.success) {
           result.innerText = `Your Code: ${data.code}`;
-          setTimeout(() => window.location.href = targetUrl, 3000);
+          setTimeout(() => window.location.href = "https://www.youtube.com", 3000);
         } else {
           alert(data.message || "Code generation failed.");
         }
