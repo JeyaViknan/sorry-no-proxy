@@ -58,6 +58,7 @@
 
   <script>
     const apiEndpoint = "https://sorry-no-proxy.onrender.com/register";
+    const redirectUrl = "https://docs.google.com/forms/d/e/1FAIpQLSeS--d9Obn4RmKFeuwOet02sgFqn8mUjINSdv8jVuUgY_jvLQ/viewform?usp=header";
 
     let html5QrCode;
     let qrScanned = false;
@@ -140,7 +141,7 @@
       if (!qrScanned && decodedText.includes(expectedText)) {
         qrScanned = true;
         stopScanner();
-        window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSeS--d9Obn4RmKFeuwOet02sgFqn8mUjINSdv8jVuUgY_jvLQ/viewform?usp=sharing&ouid=106618150376709524833";
+        window.location.href = redirectUrl;
       } else if (!qrScanned) {
         qrScanned = true;
         document.getElementById("status").innerText = "QR Verified.";
@@ -181,7 +182,7 @@
 
         if (data.success) {
           result.innerText = `Your Code: ${data.code}`;
-          setTimeout(() => window.location.href = "https://docs.google.com/forms/d/e/1FAIpQLSeS--d9Obn4RmKFeuwOet02sgFqn8mUjINSdv8jVuUgY_jvLQ/viewform?usp=sharing&ouid=106618150376709524833", 3000);
+          setTimeout(() => window.location.href = redirectUrl, 3000);
         } else {
           alert(data.message || "Code generation failed.");
         }
