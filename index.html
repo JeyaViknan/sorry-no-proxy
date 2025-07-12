@@ -144,11 +144,13 @@
         window.location.href = redirectUrl;
       } else if (!qrScanned) {
         qrScanned = true;
-        document.getElementById("status").innerText = "QR Verified.";
-        document.getElementById("reader").style.display = "none";
-        document.getElementById("zoomControl").style.display = "none";
-        document.getElementById("register-section").style.display = "block";
+        document.getElementById("status").innerText = "Invalid QR Code. Access Denied.";
         stopScanner();
+        setTimeout(() => {
+          qrScanned = false;
+          initializeScanner(); // Restart the scanner
+          document.getElementById("status").innerText = "Point your phone close to the QR";
+        }, 3000);
       }
     }
 
@@ -190,6 +192,7 @@
         alert("Server error. Try again.");
       } finally {
         loading.style.display = "none";
+        btn.style.display = "block";
       }
     }
 
