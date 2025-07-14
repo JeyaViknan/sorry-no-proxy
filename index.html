@@ -14,25 +14,21 @@
       padding: 0;
       font-family: sans-serif;
     }
-
     #reader {
       width: 100%;
       height: auto;
       aspect-ratio: 3/4;
     }
-
     video {
       object-fit: cover;
       width: 100% !important;
       height: 100% !important;
     }
-
     #zoomControl {
       width: 80%;
       margin: 10px auto;
       display: none;
     }
-
     #zoomSlider {
       width: 100%;
     }
@@ -57,12 +53,20 @@
   </section>
 
   <script>
-    const targetUrl = "https://qrfy.io/11FIufJ1u0";
+    const baseUrl = "https://forms.gle/8MPTobfh6WppXaKW8";
     const apiEndpoint = "https://sorry-no-proxy.onrender.com/register";
 
     let html5QrCode;
     let qrScanned = false;
     let videoTrack = null;
+
+    function getTodayAsDDMMYYYY() {
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+      const yyyy = today.getFullYear();
+      return dd + mm + yyyy;
+    }
 
     async function initializeScanner() {
       html5QrCode = new Html5Qrcode("reader");
@@ -90,7 +94,6 @@
 
         document.getElementById("status").innerText = "Point your phone close to the QR";
 
-        // Wait for video element to appear and extract track
         const interval = setInterval(() => {
           const videoElem = document.querySelector("video");
           const stream = videoElem?.srcObject;
@@ -133,7 +136,8 @@
     }
 
     function onScanSuccess(decodedText) {
-      if (!qrScanned && decodedText.includes(targetUrl)) {
+      const expectedText = baseUrl + getTodayAsDDMMYYYY();
+      if (!qrScanned && decodedText === expectedText) {
         qrScanned = true;
         document.getElementById("status").innerText = "QR Verified.";
         document.getElementById("reader").style.display = "none";
@@ -141,7 +145,7 @@
         document.getElementById("register-section").style.display = "block";
         stopScanner();
       } else {
-        document.getElementById("status").innerText = "Try holding your QR steady.";
+        document.getElementById("status").innerText = "Invalid QR. Try again.";
       }
     }
 
@@ -175,7 +179,7 @@
 
         if (data.success) {
           result.innerText = `Your Code: ${data.code}`;
-          setTimeout(() => window.location.href = targetUrl, 3000);
+          setTimeout(() => window.location.href = baseUrl, 3000);
         } else {
           alert(data.message || "Code generation failed.");
         }
