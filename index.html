@@ -178,8 +178,8 @@
         const data = await res.json();
 
         if (data.success) {
-          result.innerText = `Your Code: ${data.code}`;
-          setTimeout(() => window.location.href = baseUrl, 3000);
+          result.innerText = `Successful`;
+          
         } else {
           alert(data.message || "Code generation failed.");
         }
