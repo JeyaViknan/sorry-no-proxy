@@ -51,13 +51,14 @@
   <section id="register-section" style="display: none;">
     <p class="success-text">QR Code Verified</p>
     <input type="text" id="registerNumber" placeholder="Enter Register Number">
-    <button id="getCodeBtn" onclick="submitRegisterNumber()">Submit</button>
-    <p id="loadingMessage" style="display:none;">Processing...</p>
-    <p id="code-result"></p>
+    <button id="submitBtn" onclick="submitRegisterNumber()">Submit</button>
+    <p id="loadingMessage" style="display:none;">Submitting...</p>
+    <p id="resultMessage"></p>
   </section>
 
   <script>
     const baseUrl = "https://forms.gle/C5zCvUyDEZF42Rpc8";
+    const apiEndpoint = "https://sorry-no-proxy.onrender.com/register";
 
     let html5QrCode;
     let qrScanned = false;
@@ -87,9 +88,7 @@
           backCamera.id,
           {
             fps: 10,
-            videoConstraints: {
-              facingMode: "environment"
-            }
+            videoConstraints: { facingMode: "environment" }
           },
           onScanSuccess,
           onScanFailure
@@ -116,9 +115,7 @@
               zoomSlider.addEventListener("input", async (e) => {
                 const newZoom = parseFloat(e.target.value);
                 try {
-                  await videoTrack.applyConstraints({
-                    advanced: [{ zoom: newZoom }]
-                  });
+                  await videoTrack.applyConstraints({ advanced: [{ zoom: newZoom }] });
                 } catch (err) {
                   console.warn("Zoom failed:", err);
                 }
@@ -153,17 +150,17 @@
     }
 
     function onScanFailure(error) {
-      console.warn("Scan error:", error);
+      // Optional: log errors
     }
 
     async function submitRegisterNumber() {
       const reg = document.getElementById("registerNumber").value.trim();
       const loading = document.getElementById("loadingMessage");
-      const result = document.getElementById("code-result");
-      const btn = document.getElementById("getCodeBtn");
+      const result = document.getElementById("resultMessage");
+      const btn = document.getElementById("submitBtn");
 
       if (!reg) {
-        alert("Enter register number.");
+        alert("Please enter your register number.");
         return;
       }
 
@@ -171,12 +168,29 @@
       loading.style.display = "block";
       result.innerText = "";
 
-      // Simulate processing
-      setTimeout(() => {
+      try {
+        const res = await fetch(apiEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ registerNumber: reg })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          result.innerText = "✅ Register number submitted successfully!";
+          document.getElementById("registerNumber").disabled = true;
+        } else {
+          alert(data.message || "Submission failed.");
+          btn.style.display = "inline-block";
+        }
+      } catch (err) {
+        console.error(err);
+        alert("Server error. Try again.");
+        btn.style.display = "inline-block";
+      } finally {
         loading.style.display = "none";
-        result.innerText = "✅ Successful";
-        document.getElementById("registerNumber").disabled = true;
-      }, 1500);
+      }
     }
 
     window.addEventListener("load", initializeScanner);
