@@ -7,9 +7,8 @@ const { google } = require("googleapis");
 const app = express();
 const PORT = process.env.PORT || 8000;
 
-app.use(cors({ origin: "*" })); 
+app.use(cors({ origin: "*" }));
 app.use(bodyParser.json());
-
 
 const auth = new google.auth.GoogleAuth({
     credentials: {
@@ -27,23 +26,27 @@ app.post("/register", async (req, res) => {
         return res.status(400).json({ success: false, message: "Missing register number" });
     }
 
-        const generatedCode = `CODE-${Math.floor(Math.random() * 10000)}`;
-        
-
+    try {
         await sheets.spreadsheets.values.append({
             spreadsheetId: process.env.SHEET_ID,
-            range: "Sheet1!A:B",
+            range: "Sheet1!A:A", // Only appending to column A
             valueInputOption: "RAW",
-            requestBody: { values: [[registerNumber, generatedCode]] },
+            requestBody: {
+                values: [[registerNumber]],
+            },
         });
 
-        res.json({ success: true, code: generatedCode });
-});
-
-app.listen(PORT, () => {
-    console.log(`✅ Server running on https://74e2-122-187-117-179.ngrok-free.app:${PORT}`);
+        res.json({ success: true, message: "Register number stored successfully." });
+    } catch (error) {
+        console.error("❌ Error writing to sheet:", error);
+        res.status(500).json({ success: false, message: "Internal server error" });
+    }
 });
 
 app.get("/", (req, res) => {
     res.send("✅ Server is running! Use POST /register to register.");
+});
+
+app.listen(PORT, () => {
+    console.log(`✅ Server running on http://localhost:${PORT}`);
 });
