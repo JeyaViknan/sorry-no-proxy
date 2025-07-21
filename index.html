@@ -178,7 +178,7 @@
         const data = await res.json();
 
         if (data.success) {
-          result.innerText = `Successful`;
+          result.innerText = `Successful. You can now close this page.`;
           
         } else {
           alert(data.message || "Code generation failed.");
