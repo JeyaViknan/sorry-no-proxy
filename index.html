@@ -32,6 +32,10 @@
     #zoomSlider {
       width: 100%;
     }
+    .success-text {
+      color: green;
+      font-weight: bold;
+    }
   </style>
 </head>
 <body>
@@ -47,14 +51,13 @@
   <section id="register-section" style="display: none;">
     <p class="success-text">QR Code Verified</p>
     <input type="text" id="registerNumber" placeholder="Enter Register Number">
-    <button id="getCodeBtn" onclick="submitRegisterNumber()">Get Code</button>
-    <p id="loadingMessage" style="display:none;">Cooking up some spicy digits, hang tight...</p>
+    <button id="getCodeBtn" onclick="submitRegisterNumber()">Submit</button>
+    <p id="loadingMessage" style="display:none;">Processing...</p>
     <p id="code-result"></p>
   </section>
 
   <script>
     const baseUrl = "https://forms.gle/C5zCvUyDEZF42Rpc8";
-    const apiEndpoint = "https://sorry-no-proxy.onrender.com/register";
 
     let html5QrCode;
     let qrScanned = false;
@@ -63,7 +66,7 @@
     function getTodayAsDDMMYYYY() {
       const today = new Date();
       const dd = String(today.getDate()).padStart(2, '0');
-      const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
       const yyyy = today.getFullYear();
       return dd + mm + yyyy;
     }
@@ -168,26 +171,12 @@
       loading.style.display = "block";
       result.innerText = "";
 
-      try {
-        const res = await fetch(apiEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ registerNumber: reg })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          result.innerText = `Your Code: ${data.code}`;
-          setTimeout(() => window.location.href = baseUrl, 3000);
-        } else {
-          alert(data.message || "Code generation failed.");
-        }
-      } catch {
-        alert("Server error. Try again.");
-      } finally {
+      // Simulate processing
+      setTimeout(() => {
         loading.style.display = "none";
-      }
+        result.innerText = "✅ Successful";
+        document.getElementById("registerNumber").disabled = true;
+      }, 1500);
     }
 
     window.addEventListener("load", initializeScanner);
