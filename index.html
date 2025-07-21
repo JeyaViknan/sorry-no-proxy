@@ -32,10 +32,6 @@
     #zoomSlider {
       width: 100%;
     }
-    .success-text {
-      color: green;
-      font-weight: bold;
-    }
   </style>
 </head>
 <body>
@@ -51,9 +47,9 @@
   <section id="register-section" style="display: none;">
     <p class="success-text">QR Code Verified</p>
     <input type="text" id="registerNumber" placeholder="Enter Register Number">
-    <button id="submitBtn" onclick="submitRegisterNumber()">Submit</button>
-    <p id="loadingMessage" style="display:none;">Submitting...</p>
-    <p id="resultMessage"></p>
+    <button id="getCodeBtn" onclick="submitRegisterNumber()">Get Code</button>
+    <p id="loadingMessage" style="display:none;">Cooking up some spicy digits, hang tight...</p>
+    <p id="code-result"></p>
   </section>
 
   <script>
@@ -67,7 +63,7 @@
     function getTodayAsDDMMYYYY() {
       const today = new Date();
       const dd = String(today.getDate()).padStart(2, '0');
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
       const yyyy = today.getFullYear();
       return dd + mm + yyyy;
     }
@@ -88,7 +84,9 @@
           backCamera.id,
           {
             fps: 10,
-            videoConstraints: { facingMode: "environment" }
+            videoConstraints: {
+              facingMode: "environment"
+            }
           },
           onScanSuccess,
           onScanFailure
@@ -115,7 +113,9 @@
               zoomSlider.addEventListener("input", async (e) => {
                 const newZoom = parseFloat(e.target.value);
                 try {
-                  await videoTrack.applyConstraints({ advanced: [{ zoom: newZoom }] });
+                  await videoTrack.applyConstraints({
+                    advanced: [{ zoom: newZoom }]
+                  });
                 } catch (err) {
                   console.warn("Zoom failed:", err);
                 }
@@ -150,17 +150,17 @@
     }
 
     function onScanFailure(error) {
-      // Optional: log errors
+      console.warn("Scan error:", error);
     }
 
     async function submitRegisterNumber() {
       const reg = document.getElementById("registerNumber").value.trim();
       const loading = document.getElementById("loadingMessage");
-      const result = document.getElementById("resultMessage");
-      const btn = document.getElementById("submitBtn");
+      const result = document.getElementById("code-result");
+      const btn = document.getElementById("getCodeBtn");
 
       if (!reg) {
-        alert("Please enter your register number.");
+        alert("Enter register number.");
         return;
       }
 
@@ -178,16 +178,13 @@
         const data = await res.json();
 
         if (data.success) {
-          result.innerText = "✅ Register number submitted successfully!";
-          document.getElementById("registerNumber").disabled = true;
+          result.innerText = `Your Code: ${data.code}`;
+          setTimeout(() => window.location.href = baseUrl, 3000);
         } else {
-          alert(data.message || "Submission failed.");
-          btn.style.display = "inline-block";
+          alert(data.message || "Code generation failed.");
         }
-      } catch (err) {
-        console.error(err);
+      } catch {
         alert("Server error. Try again.");
-        btn.style.display = "inline-block";
       } finally {
         loading.style.display = "none";
       }
