@@ -1,4 +1,4 @@
-# 🙅‍♂️ Sorry-No-Proxy 😎  
+# 🙅‍♂️ Sorry-No-Proxy 
 > Because if you weren’t there, you weren’t *really* there.
 
 ---
