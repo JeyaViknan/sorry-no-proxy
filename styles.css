@@ -8,8 +8,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-  background-color: #000;
-  color: #e5e5e5;
+  background: linear-gradient(135deg, #e3f2fd, #ffffff);
+  color: #333;
   display: flex;
   flex-direction: column;
   align-items: center;
@@ -17,6 +17,7 @@ body {
   min-height: 100vh;
 }
 
+/* Header */
 header {
   width: 100%;
   text-align: center;
@@ -24,16 +25,13 @@ header {
 }
 
 h1 {
-  font-size: 2.2rem;
+  font-size: 2rem;
   margin: 0;
-  color: #4c8bf5;
+  color: #2c3e50;
   font-weight: 600;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 8px;
 }
 
+/* Layout */
 main {
   width: 100%;
   max-width: 500px;
@@ -43,6 +41,7 @@ main {
   align-items: center;
 }
 
+/* QR Reader */
 #reader-container {
   display: flex;
   justify-content: center;
@@ -54,55 +53,36 @@ main {
 #reader {
   position: relative;
   width: 100%;
-  max-width: 300px;
-  height: 300px;
-  border-radius: 20px;
-  background-color: #111;
+  max-width: 320px;
+  height: 320px;
+  border-radius: 16px;
+  background-color: #fff;
   border: 2px solid #4c8bf5;
-  box-shadow: 0 0 20px rgba(76, 139, 245, 0.4);
+  box-shadow: 0 4px 20px rgba(0,0,0,0.1);
   overflow: hidden;
 }
 
-#reader::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  padding: 2px;
-  border-radius: 20px;
-  background: linear-gradient(45deg, #4c8bf5, #5f9ffb, #4c8bf5);
-  background-size: 200% 200%;
-  animation: gradientGlow 4s ease infinite;
-  -webkit-mask: linear-gradient(#000 0 0) content-box, linear-gradient(#000 0 0);
-  -webkit-mask-composite: destination-out;
-  mask-composite: exclude;
-}
-
-@keyframes gradientGlow {
-  0% { background-position: 0% 50%; }
-  50% { background-position: 100% 50%; }
-  100% { background-position: 0% 50%; }
-}
-
+/* Status */
 #status {
   margin-bottom: 20px;
   font-size: 1rem;
-  color: #888;
+  color: #555;
   text-align: center;
   padding: 0 10px;
 }
 
+/* Register Section */
 #register-section {
-  background-color: #111;
+  background-color: #fff;
   padding: 24px 20px;
-  border-radius: 20px;
+  border-radius: 16px;
   width: 100%;
-  max-width: 400px;
-  box-shadow: 0 0 30px rgba(0, 0, 0, 0.6);
+  max-width: 420px;
+  box-shadow: 0 6px 30px rgba(0, 0, 0, 0.1);
   display: flex;
   flex-direction: column;
   align-items: center;
   margin-top: 24px;
-
   opacity: 0;
   transform: translateY(20px);
   animation: fadeInUp 0.8s ease forwards;
@@ -116,34 +96,32 @@ main {
   }
 }
 
+/* Input */
 #registerNumber {
   padding: 12px 16px;
-  border-radius: 12px;
-  border: 1px solid #333;
+  border-radius: 10px;
+  border: 1px solid #ccc;
   width: 100%;
   font-size: 1rem;
-  background-color: #1a1a1a;
-  color: #fff;
+  background-color: #fafafa;
+  color: #333;
   outline: none;
-  transition: border 0.2s ease, box-shadow 0.2s ease, background-color 0.2s ease;
+  transition: border 0.2s ease, box-shadow 0.2s ease;
 }
 
 #registerNumber:focus {
   border-color: #4c8bf5;
-  box-shadow: 0 0 10px rgba(76, 139, 245, 0.3);
+  box-shadow: 0 0 8px rgba(76, 139, 245, 0.2);
 }
 
-#registerNumber:hover {
-  background-color: #222;
-}
-
+/* Button */
 button {
   width: 100%;
   padding: 12px 24px;
   background-color: #4c8bf5;
   color: #fff;
   border: none;
-  border-radius: 12px;
+  border-radius: 10px;
   font-weight: 600;
   font-size: 1rem;
   cursor: pointer;
@@ -152,29 +130,31 @@ button {
 }
 
 button:hover {
-  background-color: #6b9df7;
+  background-color: #357ae8;
 }
 
 button:active {
   transform: scale(0.98);
 }
 
+/* Feedback Texts */
 .success-text {
-  color: #4c8bf5;
+  color: #2e7d32;
+  font-weight: 600;
   font-size: 1.1rem;
-  text-align: center;
   margin-bottom: 8px;
+  text-align: center;
 }
 
 #code-result {
   font-size: 1.2rem;
-  color: #0f0;
+  color: #388e3c;
   margin-top: 16px;
   text-align: center;
 }
 
 #loadingMessage {
-  color: #ffc107;
+  color: #f57c00;
   font-style: italic;
   margin-top: 10px;
   text-align: center;
