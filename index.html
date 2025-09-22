@@ -58,12 +58,22 @@
         validFormats.push(baseText + futureHour + futureMinute);
       }
       
+      // Debug: Log current time and valid formats
+      console.log('Current time:', currentHour + ':' + currentMinute);
+      console.log('Valid QR formats:', validFormats);
+      
       return validFormats;
     }
 
     function isValidQRCode(decodedText) {
       const validFormats = getCurrentTimeFormats();
-      return validFormats.includes(decodedText);
+      const isValid = validFormats.includes(decodedText);
+      
+      // Debug: Log scanned QR and validation result
+      console.log('Scanned QR:', decodedText);
+      console.log('Is valid:', isValid);
+      
+      return isValid;
     }
 
     async function initializeScanner() {
