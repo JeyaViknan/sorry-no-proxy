@@ -5,103 +5,167 @@
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />
   <title>QR Code Scanner</title>
+  <link rel="stylesheet" href="styles.css" />
   <script src="js/html5-qrcode.min.js"></script>
-  <style>
-    html, body {
-      margin: 0; padding: 0; font-family: sans-serif; overflow: hidden; touch-action: none;
-    }
-    #reader { width: 100%; height: auto; aspect-ratio: 3/4; }
-    video { object-fit: cover; width: 100% !important; height: 100% !important; }
-    #zoomControl { width: 80%; margin: 10px auto; display: none; }
-    #zoomSlider { width: 100%; }
-  </style>
 </head>
 <body>
-  <h1>QR Code Scanner</h1>
-  <div id="reader"></div>
-  <div id="zoomControl">
-    <label>Zoom:</label>
-    <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1">
-  </div>
-  <p id="status">Initializing scanner...</p>
+  <header>
+    <h1>QR Code Scanner</h1>
+  </header>
+
+  <main>
+    <div id="reader-container">
+      <div id="reader"></div>
+    </div>
+    <div id="zoomControl">
+      <label for="zoomSlider">Zoom:</label>
+      <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1" />
+    </div>
+    <p id="status">Initializing scanner...</p>
+
+    <section id="register-section" style="display: none;">
+      <p class="success-text">QR Code Verified</p>
+      <input type="text" id="registerNumber" placeholder="Enter Register Number">
+      <button id="getCodeBtn" onclick="submitRegisterNumber()">Claim</button>
+      <p id="loadingMessage" style="display:none;">Processing your attendance, hang tight...</p>
+      <p id="code-result"></p>
+    </section>
+  </main>
 
   <script>
+    const baseUrl = "https://forms.gle/C5zCvUyDEZF42Rpc8";
+    const apiEndpoint = "https://sorry-no-proxy.onrender.com/register";
+
     let html5QrCode;
     let qrScanned = false;
     let videoTrack = null;
 
-    // Generate all valid QR strings: {HH}{MM} ... {HH}{MM+4}
-    function getValidQRs() {
-      const now = new Date();
-      const hh = String(now.getHours()).padStart(2,'0');
-      const mm = now.getMinutes();
-      const validQRs = [];
-      for(let i=0; i<=4; i++){
-        const newMin = (mm + i) % 60;
-        const paddedMin = String(newMin).padStart(2,'0');
-        validQRs.push(`jeycavbhakanadiyaz${hh}${paddedMin}`);
-      }
-      return validQRs;
+    function getTodayAsDDMMYYYY() {
+      const today = new Date();
+      const dd = String(today.getDate()).padStart(2, '0');
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
+      const yyyy = today.getFullYear();
+      return dd + mm + yyyy;
     }
 
     async function initializeScanner() {
       html5QrCode = new Html5Qrcode("reader");
+
       try {
         const cameras = await Html5Qrcode.getCameras();
-        if (!cameras.length) { document.getElementById("status").innerText="No camera found."; return; }
-        const backCamera = cameras.find(c=>c.label.toLowerCase().includes("back")) || cameras[0];
+        if (!cameras.length) {
+          document.getElementById("status").innerText = "No camera found.";
+          return;
+        }
+
+        const backCamera = cameras.find(cam => cam.label.toLowerCase().includes("back")) || cameras[0];
+
         await html5QrCode.start(
           backCamera.id,
-          { fps: 10, videoConstraints: { facingMode: "environment" } },
+          {
+            fps: 10,
+            videoConstraints: { facingMode: "environment" }
+          },
           onScanSuccess,
           onScanFailure
         );
-        document.getElementById("status").innerText="Point your camera at the QR";
 
-        // Zoom control
-        const interval = setInterval(()=>{
+        document.getElementById("status").innerText = "Point your phone close to the QR";
+
+        const interval = setInterval(() => {
           const videoElem = document.querySelector("video");
           const stream = videoElem?.srcObject;
-          if(videoElem && stream){
+          if (videoElem && stream) {
             clearInterval(interval);
             videoTrack = stream.getVideoTracks()[0];
             const capabilities = videoTrack.getCapabilities();
-            if(capabilities.zoom){
+            if (capabilities.zoom) {
               const zoomSlider = document.getElementById("zoomSlider");
               zoomSlider.min = capabilities.zoom.min || 1;
               zoomSlider.max = capabilities.zoom.max || 5;
               zoomSlider.step = 0.1;
               zoomSlider.value = capabilities.zoom.min || 1;
-              document.getElementById("zoomControl").style.display="block";
-              zoomSlider.addEventListener("input", async (e)=>{
-                try{ await videoTrack.applyConstraints({advanced:[{zoom:parseFloat(e.target.value)}]}); }
-                catch(err){ console.warn("Zoom failed:",err); }
+
+              document.getElementById("zoomControl").style.display = "block";
+
+              zoomSlider.addEventListener("input", async (e) => {
+                const newZoom = parseFloat(e.target.value);
+                try {
+                  await videoTrack.applyConstraints({
+                    advanced: [{ zoom: newZoom }]
+                  });
+                } catch (err) {
+                  console.warn("Zoom failed:", err);
+                }
               });
             }
           }
         }, 300);
 
-      } catch(err){
-        document.getElementById("status").innerText=`Error: ${err.message}`;
+      } catch (err) {
+        document.getElementById("status").innerText = `Error: ${err.message}`;
       }
     }
 
-    function stopScanner(){ if(html5QrCode) html5QrCode.stop().catch(console.error); }
+    function stopScanner() {
+      if (html5QrCode) {
+        html5QrCode.stop().catch(console.error);
+      }
+    }
 
-    function onScanSuccess(decodedText){
-      const validQRs = getValidQRs();
-      if(!qrScanned && validQRs.includes(decodedText)){
-        qrScanned=true;
+    function onScanSuccess(decodedText) {
+      const expectedText = baseUrl + getTodayAsDDMMYYYY();
+      if (!qrScanned && decodedText === expectedText) {
+        qrScanned = true;
+        document.getElementById("status").innerText = "QR Verified.";
+        document.getElementById("reader").style.display = "none";
+        document.getElementById("zoomControl").style.display = "none";
+        document.getElementById("register-section").style.display = "block";
         stopScanner();
-        document.getElementById("status").innerText="QR Verified. Redirecting...";
-        // Redirect automatically
-        window.location.href = `https://your-redirect-url.com?qr=${encodeURIComponent(decodedText)}`;
       } else {
-        document.getElementById("status").innerText="Invalid QR. Try again.";
+        document.getElementById("status").innerText = "Invalid QR. Try again.";
       }
     }
 
-    function onScanFailure(error){ console.warn("Scan error:", error); }
+    function onScanFailure(error) {
+      console.warn("Scan error:", error);
+    }
+
+    async function submitRegisterNumber() {
+      const reg = document.getElementById("registerNumber").value.trim();
+      const loading = document.getElementById("loadingMessage");
+      const result = document.getElementById("code-result");
+      const btn = document.getElementById("getCodeBtn");
+
+      if (!reg) {
+        alert("Enter register number.");
+        return;
+      }
+
+      btn.style.display = "none";
+      loading.style.display = "block";
+      result.innerText = "";
+
+      try {
+        const res = await fetch(apiEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ registerNumber: reg })
+        });
+
+        const data = await res.json();
+
+        if (data.success) {
+          result.innerText = `Successful. You can now close this page.`;
+        } else {
+          alert(data.message || "Code generation failed.");
+        }
+      } catch {
+        alert("Server error. Try again.");
+      } finally {
+        loading.style.display = "none";
+      }
+    }
 
     window.addEventListener("load", initializeScanner);
   </script>
