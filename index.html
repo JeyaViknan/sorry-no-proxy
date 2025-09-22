@@ -17,35 +17,24 @@
     <div id="reader-container">
       <div id="reader"></div>
     </div>
-    <div id="zoomControl">
+    <div id="zoomControl" style="display:none;">
       <label for="zoomSlider">Zoom:</label>
       <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1" />
     </div>
     <p id="status">Initializing scanner...</p>
-
-    <section id="register-section" style="display: none;">
-      <p class="success-text">QR Code Verified</p>
-      <input type="text" id="registerNumber" placeholder="Enter Register Number">
-      <button id="getCodeBtn" onclick="submitRegisterNumber()">Claim</button>
-      <p id="loadingMessage" style="display:none;">Processing your attendance, hang tight...</p>
-      <p id="code-result"></p>
-    </section>
   </main>
 
   <script>
-    const baseUrl = "https://forms.gle/C5zCvUyDEZF42Rpc8";
-    const apiEndpoint = "https://sorry-no-proxy.onrender.com/register";
-
     let html5QrCode;
     let qrScanned = false;
     let videoTrack = null;
 
-    function getTodayAsDDMMYYYY() {
-      const today = new Date();
-      const dd = String(today.getDate()).padStart(2, '0');
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const yyyy = today.getFullYear();
-      return dd + mm + yyyy;
+    // ✅ build expected QR text in format jeycavbhakanadiyazHHMM
+    function getExpectedQR() {
+      const now = new Date();
+      const hh = String(now.getHours()).padStart(2, '0');
+      const mm = String(now.getMinutes()).padStart(2, '0');
+      return `jeycavbhakanadiyaz${hh}${mm}`;
     }
 
     async function initializeScanner() {
@@ -114,14 +103,15 @@
     }
 
     function onScanSuccess(decodedText) {
-      const expectedText = baseUrl + getTodayAsDDMMYYYY();
+      const expectedText = getExpectedQR();
+
       if (!qrScanned && decodedText === expectedText) {
         qrScanned = true;
-        document.getElementById("status").innerText = "QR Verified.";
-        document.getElementById("reader").style.display = "none";
-        document.getElementById("zoomControl").style.display = "none";
-        document.getElementById("register-section").style.display = "block";
+        document.getElementById("status").innerText = "QR Verified. Redirecting...";
         stopScanner();
+
+        // ✅ Redirect when QR matches
+        window.location.href = "https://your-target-page.com";
       } else {
         document.getElementById("status").innerText = "Invalid QR. Try again.";
       }
@@ -131,44 +121,7 @@
       console.warn("Scan error:", error);
     }
 
-    async function submitRegisterNumber() {
-      const reg = document.getElementById("registerNumber").value.trim();
-      const loading = document.getElementById("loadingMessage");
-      const result = document.getElementById("code-result");
-      const btn = document.getElementById("getCodeBtn");
-
-      if (!reg) {
-        alert("Enter register number.");
-        return;
-      }
-
-      btn.style.display = "none";
-      loading.style.display = "block";
-      result.innerText = "";
-
-      try {
-        const res = await fetch(apiEndpoint, {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ registerNumber: reg })
-        });
-
-        const data = await res.json();
-
-        if (data.success) {
-          result.innerText = `Successful. You can now close this page.`;
-        } else {
-          alert(data.message || "Code generation failed.");
-        }
-      } catch {
-        alert("Server error. Try again.");
-      } finally {
-        loading.style.display = "none";
-      }
-    }
-
     window.addEventListener("load", initializeScanner);
   </script>
 </body>
 </html>
-
