@@ -33,19 +33,37 @@
   </main>
 
   <script>
-    const baseUrl = "https://forms.gle/C5zCvUyDEZF42Rpc8";
+    const baseText = "jaycavbhakanadiyaz";
     const apiEndpoint = "https://sorry-no-proxy.onrender.com/register";
 
     let html5QrCode;
     let qrScanned = false;
     let videoTrack = null;
 
-    function getTodayAsDDMMYYYY() {
-      const today = new Date();
-      const dd = String(today.getDate()).padStart(2, '0');
-      const mm = String(today.getMonth() + 1).padStart(2, '0');
-      const yyyy = today.getFullYear();
-      return dd + mm + yyyy;
+    function getCurrentTimeFormats() {
+      const now = new Date();
+      const currentHour = String(now.getHours()).padStart(2, '0');
+      const currentMinute = String(now.getMinutes()).padStart(2, '0');
+      
+      const validFormats = [];
+      
+      // Current time: {HH}{MM}
+      validFormats.push(baseText + currentHour + currentMinute);
+      
+      // Next 4 minutes: {HH}{MM+01}, {HH}{MM+02}, {HH}{MM+03}, {HH}{MM+04}
+      for (let i = 1; i <= 4; i++) {
+        const futureTime = new Date(now.getTime() + i * 60000); // Add i minutes
+        const futureHour = String(futureTime.getHours()).padStart(2, '0');
+        const futureMinute = String(futureTime.getMinutes()).padStart(2, '0');
+        validFormats.push(baseText + futureHour + futureMinute);
+      }
+      
+      return validFormats;
+    }
+
+    function isValidQRCode(decodedText) {
+      const validFormats = getCurrentTimeFormats();
+      return validFormats.includes(decodedText);
     }
 
     async function initializeScanner() {
@@ -114,8 +132,7 @@
     }
 
     function onScanSuccess(decodedText) {
-      const expectedText = baseUrl + getTodayAsDDMMYYYY();
-      if (!qrScanned && decodedText === expectedText) {
+      if (!qrScanned && isValidQRCode(decodedText)) {
         qrScanned = true;
         document.getElementById("status").innerText = "QR Verified.";
         document.getElementById("reader").style.display = "none";
