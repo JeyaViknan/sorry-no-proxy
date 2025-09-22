@@ -5,179 +5,103 @@
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />
   <title>QR Code Scanner</title>
-  <link rel="stylesheet" href="styles.css" />
   <script src="js/html5-qrcode.min.js"></script>
   <style>
     html, body {
-      touch-action: none;
-      overflow: hidden;
-      margin: 0;
-      padding: 0;
-      font-family: sans-serif;
+      margin: 0; padding: 0; font-family: sans-serif; overflow: hidden; touch-action: none;
     }
-    #reader {
-      width: 100%;
-      height: auto;
-      aspect-ratio: 3/4;
-    }
-    video {
-      object-fit: cover;
-      width: 100% !important;
-      height: 100% !important;
-    }
-    #zoomControl {
-      width: 80%;
-      margin: 10px auto;
-      display: none;
-    }
-    #zoomSlider {
-      width: 100%;
-    }
-    #register-section {
-      text-align: center;
-      margin-top: 20px;
-    }
-    .success-text {
-      color: green;
-      font-weight: bold;
-    }
+    #reader { width: 100%; height: auto; aspect-ratio: 3/4; }
+    video { object-fit: cover; width: 100% !important; height: 100% !important; }
+    #zoomControl { width: 80%; margin: 10px auto; display: none; }
+    #zoomSlider { width: 100%; }
   </style>
 </head>
 <body>
-  <header>
-    <h1>QR Code Scanner</h1>
-  </header>
-
-  <main>
-    <div id="reader-container">
-      <div id="reader"></div>
-    </div>
-    <div id="zoomControl">
-      <label for="zoomSlider">Zoom:</label>
-      <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1" />
-    </div>
-    <p id="status">Initializing scanner...</p>
-
-    <!-- Hidden form, shown only after success -->
-    <section id="register-section" style="display: none;">
-      <p class="success-text">✅ QR Code Verified</p>
-      <input type="text" id="registerNumber" placeholder="Enter Register Number" />
-      <button id="getCodeBtn" onclick="submitRegisterNumber()">Claim</button>
-      <p id="loadingMessage" style="display:none;">Processing your attendance, hang tight...</p>
-      <p id="code-result"></p>
-    </section>
-  </main>
+  <h1>QR Code Scanner</h1>
+  <div id="reader"></div>
+  <div id="zoomControl">
+    <label>Zoom:</label>
+    <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1">
+  </div>
+  <p id="status">Initializing scanner...</p>
 
   <script>
     let html5QrCode;
     let qrScanned = false;
     let videoTrack = null;
 
-    // ✅ expected QR text (based on current HHMM at scan time)
-    function getExpectedQR() {
+    // Generate all valid QR strings: {HH}{MM} ... {HH}{MM+4}
+    function getValidQRs() {
       const now = new Date();
-      const hh = String(now.getHours()).padStart(2, '0');
-      const mm = String(now.getMinutes()).padStart(2, '0');
-      return `jeycavbhakanadiyaz${hh}${mm}`;
+      const hh = String(now.getHours()).padStart(2,'0');
+      const mm = now.getMinutes();
+      const validQRs = [];
+      for(let i=0; i<=4; i++){
+        const newMin = (mm + i) % 60;
+        const paddedMin = String(newMin).padStart(2,'0');
+        validQRs.push(`jeycavbhakanadiyaz${hh}${paddedMin}`);
+      }
+      return validQRs;
     }
 
     async function initializeScanner() {
       html5QrCode = new Html5Qrcode("reader");
-
       try {
         const cameras = await Html5Qrcode.getCameras();
-        if (!cameras.length) {
-          document.getElementById("status").innerText = "No camera found.";
-          return;
-        }
-
-        const backCamera = cameras.find(cam => cam.label.toLowerCase().includes("back")) || cameras[0];
-
+        if (!cameras.length) { document.getElementById("status").innerText="No camera found."; return; }
+        const backCamera = cameras.find(c=>c.label.toLowerCase().includes("back")) || cameras[0];
         await html5QrCode.start(
           backCamera.id,
           { fps: 10, videoConstraints: { facingMode: "environment" } },
           onScanSuccess,
           onScanFailure
         );
+        document.getElementById("status").innerText="Point your camera at the QR";
 
-        document.getElementById("status").innerText = "Point your camera at the QR";
-
-        // 🎛️ Zoom control detection
-        const interval = setInterval(() => {
+        // Zoom control
+        const interval = setInterval(()=>{
           const videoElem = document.querySelector("video");
           const stream = videoElem?.srcObject;
-          if (videoElem && stream) {
+          if(videoElem && stream){
             clearInterval(interval);
             videoTrack = stream.getVideoTracks()[0];
             const capabilities = videoTrack.getCapabilities();
-            if (capabilities.zoom) {
+            if(capabilities.zoom){
               const zoomSlider = document.getElementById("zoomSlider");
               zoomSlider.min = capabilities.zoom.min || 1;
               zoomSlider.max = capabilities.zoom.max || 5;
               zoomSlider.step = 0.1;
               zoomSlider.value = capabilities.zoom.min || 1;
-
-              document.getElementById("zoomControl").style.display = "block";
-
-              zoomSlider.addEventListener("input", async (e) => {
-                const newZoom = parseFloat(e.target.value);
-                try {
-                  await videoTrack.applyConstraints({ advanced: [{ zoom: newZoom }] });
-                } catch (err) {
-                  console.warn("Zoom failed:", err);
-                }
+              document.getElementById("zoomControl").style.display="block";
+              zoomSlider.addEventListener("input", async (e)=>{
+                try{ await videoTrack.applyConstraints({advanced:[{zoom:parseFloat(e.target.value)}]}); }
+                catch(err){ console.warn("Zoom failed:",err); }
               });
             }
           }
         }, 300);
 
-      } catch (err) {
-        document.getElementById("status").innerText = `Error: ${err.message}`;
+      } catch(err){
+        document.getElementById("status").innerText=`Error: ${err.message}`;
       }
     }
 
-    function stopScanner() {
-      if (html5QrCode) {
-        html5QrCode.stop().catch(console.error);
-      }
-    }
+    function stopScanner(){ if(html5QrCode) html5QrCode.stop().catch(console.error); }
 
-    // ✅ On scan
-    function onScanSuccess(decodedText) {
-      const expectedText = getExpectedQR();
-
-      if (!qrScanned && decodedText === expectedText) {
-        qrScanned = true;
+    function onScanSuccess(decodedText){
+      const validQRs = getValidQRs();
+      if(!qrScanned && validQRs.includes(decodedText)){
+        qrScanned=true;
         stopScanner();
-        document.getElementById("status").innerText = "QR Verified.";
-        document.getElementById("register-section").style.display = "block";
+        document.getElementById("status").innerText="QR Verified. Redirecting...";
+        // Redirect automatically
+        window.location.href = `https://your-redirect-url.com?qr=${encodeURIComponent(decodedText)}`;
       } else {
-        document.getElementById("status").innerText = "Invalid QR. Try again.";
+        document.getElementById("status").innerText="Invalid QR. Try again.";
       }
     }
 
-    function onScanFailure(error) {
-      console.warn("Scan error:", error);
-    }
-
-    // ✅ On claim button click (no redirect now)
-    function submitRegisterNumber() {
-      const regNum = document.getElementById("registerNumber").value.trim();
-      const result = document.getElementById("code-result");
-      if (!regNum) {
-        alert("Please enter your Register Number");
-        return;
-      }
-
-      document.getElementById("loadingMessage").style.display = "block";
-
-      // Simulate processing (1.2s delay)
-      setTimeout(() => {
-        document.getElementById("loadingMessage").style.display = "none";
-        result.innerText = `✅ Attendance marked for ${regNum}`;
-        result.style.color = "green";
-      }, 1200);
-    }
+    function onScanFailure(error){ console.warn("Scan error:", error); }
 
     window.addEventListener("load", initializeScanner);
   </script>
