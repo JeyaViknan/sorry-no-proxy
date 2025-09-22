@@ -2,55 +2,35 @@
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />
+  <meta name="viewport"
+    content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />
   <title>QR Code Scanner</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="js/html5-qrcode.min.js"></script>
-  <style>
-    html, body {
-      touch-action: none;
-      overflow: hidden;
-      margin: 0;
-      padding: 0;
-      font-family: sans-serif;
-    }
-    #reader {
-      width: 100%;
-      height: auto;
-      aspect-ratio: 3/4;
-    }
-    video {
-      object-fit: cover;
-      width: 100% !important;
-      height: 100% !important;
-    }
-    #zoomControl {
-      width: 80%;
-      margin: 10px auto;
-      display: none;
-    }
-    #zoomSlider {
-      width: 100%;
-    }
-  </style>
 </head>
 <body>
-  <h1>QR Code Scanner</h1>
+  <header>
+    <h1>QR Code Scanner</h1>
+  </header>
 
-  <div id="reader"></div>
-  <div id="zoomControl">
-    <label for="zoomSlider">Zoom:</label>
-    <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1" />
-  </div>
-  <p id="status">Initializing scanner...</p>
+  <main>
+    <div id="reader-container">
+      <div id="reader"></div>
+    </div>
+    <div id="zoomControl">
+      <label for="zoomSlider">Zoom:</label>
+      <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1" />
+    </div>
+    <p id="status">Initializing scanner...</p>
 
-  <section id="register-section" style="display: none;">
-    <p class="success-text">QR Code Verified</p>
-    <input type="text" id="registerNumber" placeholder="Enter Register Number">
-    <button id="getCodeBtn" onclick="submitRegisterNumber()">Claim</button>
-    <p id="loadingMessage" style="display:none;">Processing your attendance, hang tight...</p>
-    <p id="code-result"></p>
-  </section>
+    <section id="register-section" style="display: none;">
+      <p class="success-text">QR Code Verified</p>
+      <input type="text" id="registerNumber" placeholder="Enter Register Number">
+      <button id="getCodeBtn" onclick="submitRegisterNumber()">Claim</button>
+      <p id="loadingMessage" style="display:none;">Processing your attendance, hang tight...</p>
+      <p id="code-result"></p>
+    </section>
+  </main>
 
   <script>
     const baseUrl = "https://forms.gle/C5zCvUyDEZF42Rpc8";
@@ -63,7 +43,7 @@
     function getTodayAsDDMMYYYY() {
       const today = new Date();
       const dd = String(today.getDate()).padStart(2, '0');
-      const mm = String(today.getMonth() + 1).padStart(2, '0'); // Months are 0-based
+      const mm = String(today.getMonth() + 1).padStart(2, '0');
       const yyyy = today.getFullYear();
       return dd + mm + yyyy;
     }
@@ -84,9 +64,7 @@
           backCamera.id,
           {
             fps: 10,
-            videoConstraints: {
-              facingMode: "environment"
-            }
+            videoConstraints: { facingMode: "environment" }
           },
           onScanSuccess,
           onScanFailure
@@ -179,7 +157,6 @@
 
         if (data.success) {
           result.innerText = `Successful. You can now close this page.`;
-          
         } else {
           alert(data.message || "Code generation failed.");
         }
@@ -194,3 +171,5 @@
   </script>
 </body>
 </html>
+
+index.html
