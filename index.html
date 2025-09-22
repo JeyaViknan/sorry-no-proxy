@@ -7,6 +7,41 @@
   <title>QR Code Scanner</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="js/html5-qrcode.min.js"></script>
+  <style>
+    html, body {
+      touch-action: none;
+      overflow: hidden;
+      margin: 0;
+      padding: 0;
+      font-family: sans-serif;
+    }
+    #reader {
+      width: 100%;
+      height: auto;
+      aspect-ratio: 3/4;
+    }
+    video {
+      object-fit: cover;
+      width: 100% !important;
+      height: 100% !important;
+    }
+    #zoomControl {
+      width: 80%;
+      margin: 10px auto;
+      display: none;
+    }
+    #zoomSlider {
+      width: 100%;
+    }
+    #register-section {
+      text-align: center;
+      margin-top: 20px;
+    }
+    .success-text {
+      color: green;
+      font-weight: bold;
+    }
+  </style>
 </head>
 <body>
   <header>
@@ -17,11 +52,20 @@
     <div id="reader-container">
       <div id="reader"></div>
     </div>
-    <div id="zoomControl" style="display:none;">
+    <div id="zoomControl">
       <label for="zoomSlider">Zoom:</label>
       <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1" />
     </div>
     <p id="status">Initializing scanner...</p>
+
+    <!-- Hidden form, shown only after success -->
+    <section id="register-section" style="display: none;">
+      <p class="success-text">✅ QR Code Verified</p>
+      <input type="text" id="registerNumber" placeholder="Enter Register Number" />
+      <button id="getCodeBtn" onclick="submitRegisterNumber()">Claim</button>
+      <p id="loadingMessage" style="display:none;">Processing your attendance, hang tight...</p>
+      <p id="code-result"></p>
+    </section>
   </main>
 
   <script>
@@ -29,7 +73,7 @@
     let qrScanned = false;
     let videoTrack = null;
 
-    // ✅ build expected QR text in format jeycavbhakanadiyazHHMM
+    // ✅ expected QR text (based on current HHMM at scan time)
     function getExpectedQR() {
       const now = new Date();
       const hh = String(now.getHours()).padStart(2, '0');
@@ -51,16 +95,14 @@
 
         await html5QrCode.start(
           backCamera.id,
-          {
-            fps: 10,
-            videoConstraints: { facingMode: "environment" }
-          },
+          { fps: 10, videoConstraints: { facingMode: "environment" } },
           onScanSuccess,
           onScanFailure
         );
 
-        document.getElementById("status").innerText = "Point your phone close to the QR";
+        document.getElementById("status").innerText = "Point your camera at the QR";
 
+        // 🎛️ Zoom control detection
         const interval = setInterval(() => {
           const videoElem = document.querySelector("video");
           const stream = videoElem?.srcObject;
@@ -80,9 +122,7 @@
               zoomSlider.addEventListener("input", async (e) => {
                 const newZoom = parseFloat(e.target.value);
                 try {
-                  await videoTrack.applyConstraints({
-                    advanced: [{ zoom: newZoom }]
-                  });
+                  await videoTrack.applyConstraints({ advanced: [{ zoom: newZoom }] });
                 } catch (err) {
                   console.warn("Zoom failed:", err);
                 }
@@ -102,16 +142,15 @@
       }
     }
 
+    // ✅ On scan
     function onScanSuccess(decodedText) {
       const expectedText = getExpectedQR();
 
       if (!qrScanned && decodedText === expectedText) {
         qrScanned = true;
-        document.getElementById("status").innerText = "QR Verified. Redirecting...";
         stopScanner();
-
-        // ✅ Redirect when QR matches
-        window.location.href = "https://your-target-page.com";
+        document.getElementById("status").innerText = "QR Verified.";
+        document.getElementById("register-section").style.display = "block";
       } else {
         document.getElementById("status").innerText = "Invalid QR. Try again.";
       }
@@ -119,6 +158,25 @@
 
     function onScanFailure(error) {
       console.warn("Scan error:", error);
+    }
+
+    // ✅ On claim button click (no redirect now)
+    function submitRegisterNumber() {
+      const regNum = document.getElementById("registerNumber").value.trim();
+      const result = document.getElementById("code-result");
+      if (!regNum) {
+        alert("Please enter your Register Number");
+        return;
+      }
+
+      document.getElementById("loadingMessage").style.display = "block";
+
+      // Simulate processing (1.2s delay)
+      setTimeout(() => {
+        document.getElementById("loadingMessage").style.display = "none";
+        result.innerText = `✅ Attendance marked for ${regNum}`;
+        result.style.color = "green";
+      }, 1200);
     }
 
     window.addEventListener("load", initializeScanner);
