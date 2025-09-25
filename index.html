@@ -112,33 +112,36 @@
       const loading = document.getElementById("loadingMessage");
       const result = document.getElementById("code-result");
       const btn = document.getElementById("getCodeBtn");
-
+    
       if (!reg) { alert("Enter enrollment number."); return; }
-
+    
       btn.style.display = "none";
       loading.style.display = "block";
       result.innerText = "";
-
+    
       try {
-        // 1. Capture frame from webcam
-        const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+        // 🔹 Request front camera
+        const stream = await navigator.mediaDevices.getUserMedia({
+          video: { facingMode: "user" }
+        });
+    
         const video = document.createElement("video");
         video.srcObject = stream;
         await video.play();
-
+    
         const canvas = document.createElement("canvas");
         canvas.width = video.videoWidth;
         canvas.height = video.videoHeight;
         canvas.getContext("2d").drawImage(video, 0, 0);
         const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg"));
-
+    
         stream.getTracks().forEach(track => track.stop());
-
-        // 2. Send to backend
+    
+        // Send to backend
         const formData = new FormData();
         formData.append("registerNumber", reg);
         formData.append("file", blob, "frame.jpg");
-
+    
         const res = await fetch(apiEndpoint, { method: "POST", body: formData });
         const data = await res.json();
         result.innerText = data.message;
@@ -149,7 +152,7 @@
         btn.style.display = "block";
       }
     }
-
+    
     window.addEventListener("load", initializeScanner);
   </script>
 </body>
