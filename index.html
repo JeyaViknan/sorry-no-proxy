@@ -4,96 +4,153 @@
   <meta charset="UTF-8" />
   <meta name="viewport"
     content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, shrink-to-fit=no" />
-  <title>QR Code Attendance</title>
+  <title>QR Code Scanner</title>
   <link rel="stylesheet" href="styles.css" />
   <script src="js/html5-qrcode.min.js"></script>
 </head>
 <body>
   <header>
-    <h1>QR Code Attendance</h1>
+    <h1>QR Code Scanner</h1>
   </header>
 
   <main>
-    <!-- QR Scanner -->
     <div id="reader-container">
       <div id="reader"></div>
     </div>
+    <div id="zoomControl">
+      <label for="zoomSlider">Zoom:</label>
+      <input type="range" id="zoomSlider" min="1" max="5" step="0.1" value="1" />
+    </div>
     <p id="status">Initializing scanner...</p>
 
-    <!-- Section visible after QR is verified -->
     <section id="register-section" style="display: none;">
       <p class="success-text">QR Code Verified</p>
-      <input type="text" id="registerNumber" placeholder="Enter Enrollment Number">
-      <div id="camera-controls"></div>
-      <p id="loadingMessage" style="display:none;">Processing your attendance...</p>
+      <input type="text" id="registerNumber" placeholder="Enter Register Number">
+      <button id="getCodeBtn" onclick="submitRegisterNumber()">Claim</button>
+      <p id="loadingMessage" style="display:none;">Processing your attendance, hang tight...</p>
       <p id="code-result"></p>
     </section>
   </main>
 
   <script>
-    const baseText = "jeycavbhakanadiyaz"; // your secret text
-    const apiEndpoint = "http://localhost:8000/verify-attendance";
+    const baseText = "jeycavbhakanadiyaz";
+    const apiEndpoint = "https://sorry-no-proxy.onrender.com/register";
 
     let html5QrCode;
     let qrScanned = false;
+    let videoTrack = null;
 
-    // Generate valid QR formats for now + next few minutes
     function getCurrentTimeFormats() {
       const now = new Date();
+      const currentHour = String(now.getHours()).padStart(2, '0');
+      const currentMinute = String(now.getMinutes()).padStart(2, '0');
+      
       const validFormats = [];
-      for (let i = 0; i <= 4; i++) {
-        const t = new Date(now.getTime() + i * 60000);
-        const h = String(t.getHours()).padStart(2, '0');
-        const m = String(t.getMinutes()).padStart(2, '0');
-        validFormats.push(baseText + h + m);
+      
+      // Current time: {HH}{MM}
+      validFormats.push(baseText + currentHour + currentMinute);
+      
+      // Next 4 minutes: {HH}{MM+01}, {HH}{MM+02}, {HH}{MM+03}, {HH}{MM+04}
+      for (let i = 1; i <= 4; i++) {
+        const futureTime = new Date(now.getTime() + i * 60000); // Add i minutes
+        const futureHour = String(futureTime.getHours()).padStart(2, '0');
+        const futureMinute = String(futureTime.getMinutes()).padStart(2, '0');
+        validFormats.push(baseText + futureHour + futureMinute);
       }
+      
+      // Debug: Log current time and valid formats
+      console.log('Current time:', currentHour + ':' + currentMinute);
+      console.log('Valid QR formats:', validFormats);
+      
       return validFormats;
     }
 
     function isValidQRCode(decodedText) {
-      return getCurrentTimeFormats().includes(decodedText);
+      const validFormats = getCurrentTimeFormats();
+      const isValid = validFormats.includes(decodedText);
+      
+      // Debug: Log scanned QR and validation result
+      console.log('Scanned QR:', decodedText);
+      console.log('Is valid:', isValid);
+      
+      return isValid;
     }
 
     async function initializeScanner() {
       html5QrCode = new Html5Qrcode("reader");
+
       try {
         const cameras = await Html5Qrcode.getCameras();
         if (!cameras.length) {
           document.getElementById("status").innerText = "No camera found.";
           return;
         }
-        const backCamera = cameras.find(c => c.label.toLowerCase().includes("back")) || cameras[0];
+
+        const backCamera = cameras.find(cam => cam.label.toLowerCase().includes("back")) || cameras[0];
+
         await html5QrCode.start(
           backCamera.id,
-          { fps: 10, videoConstraints: { facingMode: "environment" } },
+          {
+            fps: 10,
+            videoConstraints: { facingMode: "environment" }
+          },
           onScanSuccess,
           onScanFailure
         );
-        document.getElementById("status").innerText = "Point your phone at the QR code";
+
+        document.getElementById("status").innerText = "Point your phone close to the QR";
+
+        const interval = setInterval(() => {
+          const videoElem = document.querySelector("video");
+          const stream = videoElem?.srcObject;
+          if (videoElem && stream) {
+            clearInterval(interval);
+            videoTrack = stream.getVideoTracks()[0];
+            const capabilities = videoTrack.getCapabilities();
+            if (capabilities.zoom) {
+              const zoomSlider = document.getElementById("zoomSlider");
+              zoomSlider.min = capabilities.zoom.min || 1;
+              zoomSlider.max = capabilities.zoom.max || 5;
+              zoomSlider.step = 0.1;
+              zoomSlider.value = capabilities.zoom.min || 1;
+
+              document.getElementById("zoomControl").style.display = "block";
+
+              zoomSlider.addEventListener("input", async (e) => {
+                const newZoom = parseFloat(e.target.value);
+                try {
+                  await videoTrack.applyConstraints({
+                    advanced: [{ zoom: newZoom }]
+                  });
+                } catch (err) {
+                  console.warn("Zoom failed:", err);
+                }
+              });
+            }
+          }
+        }, 300);
+
       } catch (err) {
         document.getElementById("status").innerText = `Error: ${err.message}`;
       }
     }
 
     function stopScanner() {
-      if (html5QrCode) html5QrCode.stop().catch(console.error);
+      if (html5QrCode) {
+        html5QrCode.stop().catch(console.error);
+      }
     }
 
     function onScanSuccess(decodedText) {
       if (!qrScanned && isValidQRCode(decodedText)) {
         qrScanned = true;
-        document.getElementById("status").innerText = "✅ QR Verified.";
+        document.getElementById("status").innerText = "QR Verified.";
         document.getElementById("reader").style.display = "none";
+        document.getElementById("zoomControl").style.display = "none";
         document.getElementById("register-section").style.display = "block";
         stopScanner();
-
-        // Show button to open front camera
-        const btn = document.createElement("button");
-        btn.innerText = "Open Camera";
-        btn.onclick = openFrontCamera;
-        document.getElementById("camera-controls").appendChild(btn);
       } else {
-        document.getElementById("status").innerText = "❌ Invalid QR. Try again.";
+        document.getElementById("status").innerText = "Invalid QR. Try again.";
       }
     }
 
@@ -101,52 +158,40 @@
       console.warn("Scan error:", error);
     }
 
-    // ============= FRONT CAMERA CAPTURE =============
-    let videoStream, videoElement;
-
-    async function openFrontCamera() {
-      videoStream = await navigator.mediaDevices.getUserMedia({ video: { facingMode: "user" } });
-      videoElement = document.createElement("video");
-      videoElement.autoplay = true;
-      videoElement.srcObject = videoStream;
-      videoElement.style.width = "100%";
-      document.getElementById("camera-controls").innerHTML = ""; // clear old button
-      document.getElementById("camera-controls").appendChild(videoElement);
-
-      // Add capture button
-      const captureBtn = document.createElement("button");
-      captureBtn.innerText = "Capture Image";
-      captureBtn.onclick = captureImage;
-      document.getElementById("camera-controls").appendChild(captureBtn);
-    }
-
-    async function captureImage() {
-      const canvas = document.createElement("canvas");
-      canvas.width = videoElement.videoWidth;
-      canvas.height = videoElement.videoHeight;
-      canvas.getContext("2d").drawImage(videoElement, 0, 0);
-
-      const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/jpeg"));
-      videoStream.getTracks().forEach(track => track.stop());
-      videoElement.remove();
-
+    async function submitRegisterNumber() {
       const reg = document.getElementById("registerNumber").value.trim();
+      const loading = document.getElementById("loadingMessage");
+      const result = document.getElementById("code-result");
+      const btn = document.getElementById("getCodeBtn");
+
       if (!reg) {
-        alert("Enter your enrollment number first!");
+        alert("Enter register number.");
         return;
       }
 
-      document.getElementById("loadingMessage").style.display = "block";
+      btn.style.display = "none";
+      loading.style.display = "block";
+      result.innerText = "";
 
-      const formData = new FormData();
-      formData.append("registerNumber", reg);
-      formData.append("file", blob, "frame.jpg");
+      try {
+        const res = await fetch(apiEndpoint, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ registerNumber: reg })
+        });
 
-      const res = await fetch(apiEndpoint, { method: "POST", body: formData });
-      const data = await res.json();
+        const data = await res.json();
 
-      document.getElementById("loadingMessage").style.display = "none";
-      document.getElementById("code-result").innerText = data.message;
+        if (data.success) {
+          result.innerText = `Successful. You can now close this page.`;
+        } else {
+          alert(data.message || "Code generation failed.");
+        }
+      } catch {
+        alert("Server error. Try again.");
+      } finally {
+        loading.style.display = "none";
+      }
     }
 
     window.addEventListener("load", initializeScanner);
