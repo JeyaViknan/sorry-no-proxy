@@ -39,7 +39,6 @@
 
     let html5QrCode;
     let qrScanned = false;
-    let videoTrack = null;
 
     function getCurrentTimeFormats() {
       const now = new Date();
@@ -109,16 +108,30 @@
       loading.style.display = "block";
       result.innerText = "";
 
-      const formData = new FormData();
-      formData.append("registerNumber", reg);
-      formData.append("file", fileInput.files[0]);
-
       try {
+        // ✅ Convert file to PNG before sending
+        const file = fileInput.files[0];
+        const image = await createImageBitmap(file);
+
+        const canvas = document.createElement("canvas");
+        canvas.width = image.width;
+        canvas.height = image.height;
+        const ctx = canvas.getContext("2d");
+        ctx.drawImage(image, 0, 0);
+
+        const blob = await new Promise(resolve => canvas.toBlob(resolve, "image/png", 0.9));
+        const convertedFile = new File([blob], "selfie.png", { type: "image/png" });
+
+        const formData = new FormData();
+        formData.append("registerNumber", reg);
+        formData.append("file", convertedFile);
+
         const res = await fetch(apiEndpoint, { method: "POST", body: formData });
         const data = await res.json();
         result.innerText = data.message || "Unexpected response";
       } catch (err) {
-        alert("Server error. Try again."); console.error(err);
+        alert("Server error. Try again."); 
+        console.error(err);
       } finally {
         loading.style.display = "none";
         btn.style.display = "block";
