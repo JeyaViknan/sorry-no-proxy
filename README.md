@@ -1,52 +1,47 @@
 # 🙅‍♂️ Sorry-No-Proxy 
-> Because if you weren’t there, you weren’t *really* there.
+> Because if you weren't there, you weren't *really* there.
 
 ---
 
 ## 🎯 Project Overview
 
-**Sorry-No-Proxy** is an attendance system designed to eliminate proxies once and for all — not with brute force, but with a clever QR twist.
-
-It consists of two parts:
-
-- 🧑‍🏫 **Faculty Side**: A simple frontend that plays the “catch the valid QR” game.
-- 👨‍🎓 **Student Side**: A smart scanner app that knows which QR is real and which one’s just a decoy.
-
-Spoiler: the student side does all the heavy lifting.
+**Sorry-No-Proxy** is an attendance system designed to eliminate proxies through time-based QR code validation. Students must physically be present to scan a valid QR code that changes based on the current time.
 
 ---
 
-## 🧑‍🏫 Faculty Side
+## 👨‍🎓 Student Side (QR Scanner App)
 
-- Built with just **HTML & CSS**.
-- Displays QR codes that **change every few seconds**.
-- **Almost all** of them are **fake** — harmless little trolls.
-- At **one** **random point in time**, a **valid QR** appears — this leads to a **Google Form**.
-- If a student catches that moment, they’re in. If not — better luck next class.
+### Frontend (`index.html`)
+- **QR Scanner**: Uses `html5-qrcode` library to scan QR codes via device camera
+- **Time-Based Validation**: Only accepts QR codes matching the format `jeycavbhakanadiyaz + HHMM`
+  - Valid for current minute and next 4 minutes (5 total time windows)
+  - Example: At 14:30, valid codes are `jeycavbhakanadiyaz1430`, `jeycavbhakanadiyaz1431`, `jeycavbhakanadiyaz1432`, `jeycavbhakanadiyaz1433`, `jeycavbhakanadiyaz1434`
+- **Registration Flow**:
+  1. Student scans QR code
+  2. If valid, scanner stops and registration form appears
+  3. Student enters their Register Number
+  4. Clicks "Claim" button
+  5. System generates unique code and saves to Google Sheets
+  6. Success message displayed
+
+### Backend (`server.js`)
+- **Express Server**: REST API running on port 8000
+- **POST `/register` Endpoint**:
+  - Receives register number from frontend
+  - Generates random code: `CODE-{0-9999}`
+  - Saves to Google Sheets (Sheet1):
+    - Column A: Register Number
+    - Column B: Generated Code
+  - Returns success response with generated code
 
 ---
 
-## 👨‍🎓 Student Side
+## 🔐 How It Prevents Proxy Attendance
 
-- Built with **Node.js**, **Express.js**, and **JavaScript**.
-- Acts as a QR scanner, but with standards — it **only responds to the valid QR**.
-- When a valid QR is detected:
-  1. The student is asked to enter their **Register Number**.
-  2. A **unique code** is generated for that register number.
-  3. This code is saved to a **Google Sheet** via **Google Sheets API**.
-  4. The student sees this code for **3 seconds** — better memorize it!
-  5. They’re then redirected to the **Google Form** where:
-     - The first field is the **generated code** (serves as your attendance password).
-     - Followed by name, register number, etc.
-
----
-
-## ✅ Attendance Verification Logic
-
-- When the Google Form is submitted, the faculty side checks if:
-  - The **code entered in the form** matches the one stored in the Google Sheet.
-- If they match: ✅ Attendance granted.
-- If not: ❌ Proxy alert! Someone’s trying to be sneaky.
+1. **Time-Sensitive QR Codes**: QR codes are only valid for a 5-minute window, requiring students to be present during class
+2. **Physical Presence Required**: Must use device camera to scan QR code (can't be shared remotely)
+3. **Unique Code Generation**: Each registration generates a unique code stored in Google Sheets for verification
+4. **One-Time Scan**: Once a valid QR is scanned, the scanner stops (prevents multiple scans)
 
 ---
 
@@ -54,32 +49,59 @@ Spoiler: the student side does all the heavy lifting.
 
 | Component             | Technology               |
 |----------------------|--------------------------|
-| Faculty Frontend     | HTML, CSS                |
-| Student App Backend  | Node.js, Express.js      |
-| QR Code Management   | JavaScript               |
+| Frontend             | HTML, CSS, JavaScript    |
+| QR Scanning          | html5-qrcode library     |
+| Backend              | Node.js, Express.js      |
 | Data Storage         | Google Sheets (via API)  |
-| Form Submission      | Google Forms             |
+| Authentication       | Google Service Account   |
+
+---
+
+## 🚀 Setup
+
+1. Install dependencies:
+   ```bash
+   npm install
+   ```
+
+2. Set up environment variables (`.env`):
+   ```
+   PORT=8000
+   GOOGLE_SERVICE_ACCOUNT_EMAIL=your-service-account@project.iam.gserviceaccount.com
+   GOOGLE_PRIVATE_KEY=your-private-key
+   SHEET_ID=your-google-sheet-id
+   ```
+
+3. Start the server:
+   ```bash
+   npm start
+   ```
+
+4. Open `index.html` in a browser (or serve via a web server)
 
 ---
 
 ## 🤖 Why This Works
 
-Unlike traditional attendance systems where anyone can just fill in a form link and pretend they were present, **Sorry-No-Proxy** introduces an element of *surprise and validation*. It’s like a pop quiz, but instead of grades, you get attendance.
+Unlike traditional attendance systems where anyone can just fill in a form link, **Sorry-No-Proxy** requires:
+- Physical presence to scan the QR code
+- Scanning within the valid time window
+- Using a device with camera access
 
 No more:
 - "Bro, send me the form link."
-- "I'll mark you present, don’t worry."
+- "I'll mark you present, don't worry."
 - "Let me just scan from home."
 
-Because unless you were there — scanning, entering, memorizing, and submitting — **you get nothing.** 😈
+Because unless you were there — scanning and registering — **you get nothing.** 😈
 
 ---
 
 ## ✨ Final Word
 
-This project wasn’t just made to log attendance. It was made to restore faith in the system (okay, maybe just a little).  
+This project wasn't just made to log attendance. It was made to restore faith in the system (okay, maybe just a little).  
 If you were actually present — **you deserve your attendance**.  
-If you weren’t — well, **Sorry... No Proxy** 😉
+If you weren't — well, **Sorry... No Proxy** 😉
 
 ---
 
